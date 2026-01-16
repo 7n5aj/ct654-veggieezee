@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nepal Veggie Price Tracker</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+ <header class="header">
+        <div class="logo-section">
+            <div class="logo">🥬</div>
+            <div class="brand-text">
+                <h1>Nepal Veggie</h1>
+                <p>Price Tracker</p>
+            </div>
+        </div>
+        <nav class="nav-buttons">
+            <a href="{% url 'trade' %}" style="text-decoration: none;">
+            <button class="nav-btn">📊 Dashboard</button> </a>
+            <a href="{% url 'insights' %}" style="text-decoration: none;">
+            <button class="nav-btn">📈 Insights</button> </a>   
+        </nav>
+        <div class="user-controls">            
+            <button class="icon-btn">⚙️</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Top Price Cards -->
+        <div class="grid-3">
+            <div class="price-card">
+                <div class="price-header">
+                    <div>
+                        <h2 class="price-value">Rs. 85.38 <span class="price-unit">/piece</span></h2>
+                        <div class="price-change positive">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                <polyline points="17 6 23 6 23 12"></polyline>
+                            </svg>
+                            +3.6%
+                        </div>
+                    </div>
+                </div>
+                <canvas class="chart" id="chart1" width="300" height="100"></canvas>
+            </div>
+
+            <div class="price-card">
+                <div class="price-header">
+                    <div>
+                        <h2 class="price-value">Rs. 50.49 <span class="price-unit">/kg</span></h2>
+                        <div class="price-change negative">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                                <polyline points="17 18 23 18 23 12"></polyline>
+                            </svg>
+                            -2.8%
+                        </div>
+                    </div>
+                </div>
+                <canvas class="chart" id="chart2" width="300" height="100"></canvas>
+            </div>
+
+            <div class="price-card">
+                <div class="price-header">
+                    <div>
+                        <h2 class="price-value">Rs. 165.29 <span class="price-unit">/kg</span></h2>
+                        <div class="price-change negative">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                                <polyline points="17 18 23 18 23 12"></polyline>
+                            </svg>
+                            -4.1%
+                        </div>
+                    </div>
+                </div>
+                <canvas class="chart" id="chart3" width="300" height="100"></canvas>
+            </div>
+        </div>
+
+        <!-- Vegetable Cards -->
+        <div class="grid-3">
+            <!-- Green Beans -->
+            <div class="veggie-card">
+                <div class="veggie-header">
+                    <div>
+                        <h3 class="veggie-name">Green Beans</h3>
+                        <p class="veggie-local">Simi</p>
+                    </div>
+                    <span class="category-tag">Legumes</span>
+                </div>
+                <div class="veggie-price">
+                    <span class="price">Rs. 76.89 <span class="unit">/kg</span></span>
+                    <span class="change negative">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                            <polyline points="17 18 23 18 23 12"></polyline>
+                        </svg>
+                        -2.8%
+                    </span>
+                </div>
+                <canvas class="chart" id="chart4" width="300" height="80"></canvas>
+            </div>
+
+            <!-- Onion -->
+            <div class="veggie-card">
+                <div class="veggie-header">
+                    <div>
+                        <h3 class="veggie-name">Onion</h3>
+                        <p class="veggie-local">Pyaaj</p>
+                    </div>
+                    <span class="category-tag">Alliums</span>
+                </div>
+                <div class="veggie-price">
+                    <span class="price">Rs. 42.56 <span class="unit">/kg</span></span>
+                    <span class="change negative">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                            <polyline points="17 18 23 18 23 12"></polyline>
+                        </svg>
+                        -8.0%
+                    </span>
+                </div>
+                <canvas class="chart" id="chart5" width="300" height="80"></canvas>
+            </div>
+
+            <!-- Potato -->
+            <div class="veggie-card">
+                <div class="veggie-header">
+                    <div>
+                        <h3 class="veggie-name">Potato</h3>
+                        <p class="veggie-local">Aalu</p>
+                    </div>
+                    <span class="category-tag">Root Vegetables</span>
+                </div>
+                <div class="veggie-price">
+                    <span class="price">Rs. 38.87 <span class="unit">/kg</span></span>
+                    <span class="change positive">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        +2.0%
+                    </span>
+                </div>
+                <canvas class="chart" id="chart6" width="300" height="80"></canvas>
+            </div>
+
+            <!-- Radish -->
+            <div class="veggie-card">
+                <div class="veggie-header">
+                    <div>
+                        <h3 class="veggie-name">Radish</h3>
+                        <p class="veggie-local">Mula</p>
+                    </div>
+                    <span class="category-tag">Root Vegetables</span>
+                </div>
+                <div class="veggie-price">
+                    <span class="price">Rs. 42.87 <span class="unit">/kg</span></span>
+                    <span class="change negative">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                            <polyline points="17 18 23 18 23 12"></polyline>
+                        </svg>
+                        -3.4%
+                    </span>
+                </div>
+                <canvas class="chart" id="chart7" width="300" height="80"></canvas>
+            </div>
+
+            <!-- Spinach -->
+            <div class="veggie-card">
+                <div class="veggie-header">
+                    <div>
+                        <h3 class="veggie-name">Spinach</h3>
+                        <p class="veggie-local">Palungo</p>
+                    </div>
+                    <span class="category-tag">Leafy Greens</span>
+                </div>
+                <div class="veggie-price">
+                    <span class="price">Rs. 47.31 <span class="unit">/bunch</span></span>
+                    <span class="change positive">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                            <polyline points="17 6 23 6 23 12"></polyline>
+                        </svg>
+                        +2.8%
+                    </span>
+                </div>
+                <canvas class="chart" id="chart8" width="300" height="80"></canvas>
+            </div>
+
+            <!-- Tomato -->
+            <div class="veggie-card">
+                <div class="veggie-header">
+                    <div>
+                        <h3 class="veggie-name">Tomato</h3>
+                        <p class="veggie-local">Golbheda</p>
+                    </div>
+                    <span class="category-tag">Nightshades</span>
+                </div>
+                <div class="veggie-price">
+                    <span class="price">Rs. 58.00 <span class="unit">/kg</span></span>
+                    <span class="change negative">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                            <polyline points="17 18 23 18 23 12"></polyline>
+                        </svg>
+                        -9.4%
+                    </span>
+                </div>
+                <canvas class="chart" id="chart9" width="300" height="80"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../static/js/script.js"></script>
+</body>
+</html>

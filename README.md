@@ -6,8 +6,8 @@
 
 **AI-Powered Vegetable Price Prediction System**
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-5.0+-green.svg)](https://www.djangoproject.com/)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/Django-6.0+-green.svg)](https://www.djangoproject.com/)
 [![Machine Learning](https://img.shields.io/badge/ML-Scikit--learn-orange.svg)](https://scikit-learn.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -16,7 +16,7 @@
 </div>
 
 
-**Veggieeze** is an intelligent vegetable price prediction system designed to help farmers, traders, and agricultural businesses make data-driven decisions. By leveraging machine learning algorithms and real-time market data, Veggieeze provides accurate price forecasts, seasonal insights, and personalized recommendations.
+**Veggieezee** is an intelligent vegetable price prediction system designed to help farmers, traders, and agricultural businesses make data-driven decisions. By leveraging machine learning algorithms and real-time market data, Veggieeze provides accurate price forecasts, seasonal insights, and personalized recommendations.
 
 
 ##  How to run the project? 
@@ -73,9 +73,8 @@
 ---
 ## 🌐 Access the Application
     Open your browser and visit: 
-    ```bash
    http://127.0.0.1:8000/
-   ```
+
 ## 💻 Usage
 
 ### For New Users

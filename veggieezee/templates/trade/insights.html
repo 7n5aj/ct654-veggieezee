@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nepal Veggie Price Tracker - Market Insights</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+                line-height: 1.6;
+
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: #10b981;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .brand-text h1 {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .brand-text p {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1.25rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-btn:hover {
+            background: #f9f9f9;
+        }
+
+        .user-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-title {
+            margin-bottom: 2rem;
+        }
+
+        .page-title h2 {
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-title p {
+            color: #999;
+            font-size: 1rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header h3 {
+            font-size: 1.3rem;
+        }
+
+        .date-selector {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .chart-placeholder {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            text-align: center;
+        }
+
+        .chart-placeholder.has-data {
+            display: block;
+        }
+
+        .chart-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 400px;
+            display: none;
+        }
+
+        .chart-canvas.active {
+            display: block;
+        }
+
+        .vegetable-selector {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .selector-header {
+            margin-bottom: 1rem;
+        }
+
+        .selector-header h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .selector-header p {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .selection-count {
+            display: inline;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .vegetable-list {
+            list-style: none;
+        }
+
+        .vegetable-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .vegetable-item:hover {
+            background: #f9f9f9;
+        }
+
+        .vegetable-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .vegetable-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex: 1;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .checkbox.checked {
+            background: #10b981;
+            border-color: #10b981;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;
+        }
+
+        .vegetable-name {
+            font-weight: 500;
+        }
+
+        .vegetable-local {
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .vegetable-price {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .stat-header h3 {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .stat-list {
+            list-style: none;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-number {
+            color: #999;
+            margin-right: 0.5rem;
+        }
+
+        .stat-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .stat-badge.increase {
+            background: #fee;
+            color: #e11d48;
+        }
+
+        .stat-badge.decrease {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .chart-line {
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🥬</div>
+            <div class="brand-text">
+                <h1>Nepal Veggie</h1>
+                <p>Price Tracker</p>
+            </div>
+        </div>
+        <nav class="nav-buttons">
+            <a href="{% url 'trade' %}" style="text-decoration: none;">
+            <button class="nav-btn">📊 Dashboard</button> </a>
+            <a href="{% url 'insights' %}" style="text-decoration: none;">
+            <button class="nav-btn">📈 Insights</button> </a>   
+        </nav>
+        <div class="user-controls">
+            <button class="icon-btn">⚙️</button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="page-title">
+            <h2>📈 Market Insights</h2>
+            <p>Compare prices and analyze trends</p>
+        </div>
+
+        <div class="content-grid">
+            <section class="chart-section">
+                <div class="chart-header">
+                    <h3>Price Comparison</h3>
+                    <button class="date-selector">📅 Last 30 days</button>
+                </div>
+                <div class="chart-placeholder" id="chartPlaceholder">
+                    <div class="chart-icon">📈</div>
+                    <h4>Select vegetables to compare</h4>
+                    <p>Choose up to 5 vegetables from the list on the right to see<br>their price trends.</p>
+                </div>
+                <canvas id="chartCanvas" class="chart-canvas"></canvas>
+            </section>
+
+            <aside class="vegetable-selector">
+                <div class="selector-header">
+                    <h3>Select Vegetables</h3>
+                    <p>Choose up to 5 to compare (<span class="selection-count" id="selectionCount">0</span>/5 selected)</p>
+                </div>
+                <ul class="vegetable-list" id="vegetableList"></ul>
+            </aside>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>📈</span>
+                    <h3>Top Price Increases</h3>
+                </div>
+                <ul class="stat-list">
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">1.</span> Carrot</div>
+                        <span class="stat-badge increase">+6.1%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">2.</span> Cauliflower</div>
+                        <span class="stat-badge increase">+3.6%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">3.</span> Spinach</div>
+                        <span class="stat-badge increase">+2.8%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">4.</span> Potato</div>
+                        <span class="stat-badge increase">+2.0%</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span>📉</span>
+                    <h3>Top Price Decreases</h3>
+                </div>
+                <ul class="stat-list">
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">1.</span> Tomato</div>
+                        <span class="stat-badge decrease">-9.4%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">2.</span> Onion</div>
+                        <span class="stat-badge decrease">-8.0%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">3.</span> Cabbage</div>
+                        <span class="stat-badge decrease">-5.3%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">4.</span> Garlic</div>
+                        <span class="stat-badge decrease">-4.1%</span>
+                    </li>
+                    <li class="stat-item">
+                        <div class="stat-name"><span class="stat-number">5.</span> Bitter Gourd</div>
+                        <span class="stat-badge decrease">-3.7%</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Vegetable data with prices and trend history
+        const vegetables = [
+            { name: 'Bitter Gourd', local: 'Tite Karela', price: 74, color: '#ef4444' },
+            { name: 'Cabbage', local: 'Banda', price: 40, color: '#f59e0b' },
+            { name: 'Carrot', local: 'Gajar', price: 41, color: '#10b981' },
+            { name: 'Cauliflower', local: 'Kauli', price: 85, color: '#3b82f6' },
+            { name: 'Cucumber', local: 'Kakro', price: 50, color: '#8b5cf6' },
+            { name: 'Garlic', local: 'Lasun', price: 165, color: '#ec4899' },
+            { name: 'Green Beans', local: 'Simi', price: 77, color: '#14b8a6' },
+            { name: 'Onion', local: 'Pyaaj', price: 43, color: '#f97316' },
+            { name: 'Potato', local: 'Aalu', price: 39, color: '#06b6d4' },
+            { name: 'Spinach', local: 'Palungo', price: 52, color: '#84cc16' },
+            { name: 'Tomato', local: 'Golbheda', price: 68, color: '#f43f5e' }
+        ];
+
+        // Generate random price history for each vegetable (30 days)
+        vegetables.forEach(veg => {
+            veg.history = [];
+            let basePrice = veg.price;
+            for (let i = 29; i >= 0; i--) {
+                const variation = (Math.random() - 0.5) * 10;
+                const price = Math.max(basePrice + variation, 10);
+                veg.history.push(Math.round(price));
+                basePrice = price;
+            }
+        });
+
+        let selectedVegetables = [];
+        const MAX_SELECTION = 5;
+
+        // Render vegetable list
+        function renderVegetableList() {
+            const list = document.getElementById('vegetableList');
+            list.innerHTML = '';
+
+            vegetables.forEach((veg, index) => {
+                const li = document.createElement('li');
+                li.className = 'vegetable-item';
+                
+                const isSelected = selectedVegetables.includes(veg.name);
+                const isDisabled = !isSelected && selectedVegetables.length >= MAX_SELECTION;
+                
+                if (isDisabled) {
+                    li.classList.add('disabled');
+                }
+
+                li.innerHTML = `
+                    <div class="vegetable-info">
+                        <div class="checkbox ${isSelected ? 'checked' : ''}" data-veg="${veg.name}"></div>
+                        <span class="vegetable-name">${veg.name} <span class="vegetable-local">(${veg.local})</span></span>
+                    </div>
+                    <span class="vegetable-price">Rs. ${veg.price}</span>
+                `;
+
+                if (!isDisabled) {
+                    li.addEventListener('click', () => toggleVegetable(veg.name));
+                }
+
+                list.appendChild(li);
+            });
+
+            updateSelectionCount();
+        }
+
+        function toggleVegetable(vegName) {
+            const index = selectedVegetables.indexOf(vegName);
+            
+            if (index > -1) {
+                selectedVegetables.splice(index, 1);
+            } else {
+                if (selectedVegetables.length < MAX_SELECTION) {
+                    selectedVegetables.push(vegName);
+                }
+            }
+
+            renderVegetableList();
+            updateChart();
+        }
+
+        function updateSelectionCount() {
+            document.getElementById('selectionCount').textContent = selectedVegetables.length;
+        }
+
+        function updateChart() {
+            const placeholder = document.getElementById('chartPlaceholder');
+            const canvas = document.getElementById('chartCanvas');
+
+            if (selectedVegetables.length === 0) {
+                placeholder.style.display = 'flex';
+                canvas.classList.remove('active');
+                return;
+            }
+
+            placeholder.style.display = 'none';
+            canvas.classList.add('active');
+            drawChart();
+        }
+
+        function drawChart() {
+            const canvas = document.getElementById('chartCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 400;
+
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 50;
+            const chartWidth = width - padding * 2;
+            const chartHeight = height - padding * 2;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Get selected vegetable data
+            const selectedData = vegetables.filter(v => selectedVegetables.includes(v.name));
+            
+            if (selectedData.length === 0) return;
+
+            // Find min and max prices for scaling
+            let minPrice = Infinity;
+            let maxPrice = -Infinity;
+            selectedData.forEach(veg => {
+                veg.history.forEach(price => {
+                    minPrice = Math.min(minPrice, price);
+                    maxPrice = Math.max(maxPrice, price);
+                });
+            });
+
+            const priceRange = maxPrice - minPrice;
+            const priceStep = Math.ceil(priceRange / 5);
+            minPrice = Math.floor(minPrice / priceStep) * priceStep;
+            maxPrice = Math.ceil(maxPrice / priceStep) * priceStep;
+
+            // Draw grid and axes
+            ctx.strokeStyle = '#e5e5e5';
+            ctx.lineWidth = 1;
+
+            // Horizontal grid lines
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+
+                // Y-axis labels
+                ctx.fillStyle = '#999';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'right';
+                const price = maxPrice - (maxPrice - minPrice) * (i / 5);
+                ctx.fillText(`Rs. ${Math.round(price)}`, padding - 10, y + 4);
+            }
+
+            // Draw lines for each vegetable
+            selectedData.forEach((veg, vegIndex) => {
+                ctx.strokeStyle = veg.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+
+                veg.history.forEach((price, dayIndex) => {
+                    const x = padding + (chartWidth / (veg.history.length - 1)) * dayIndex;
+                    const y = padding + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
+
+                    if (dayIndex === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+
+                ctx.stroke();
+
+                // Draw legend
+                const legendY = 20 + vegIndex * 25;
+                ctx.fillStyle = veg.color;
+                ctx.fillRect(width - 180, legendY, 20, 3);
+                ctx.fillStyle = '#333';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(veg.name, width - 155, legendY + 3);
+            });
+
+            // X-axis labels (days)
+            ctx.fillStyle = '#999';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            const dayLabels = [0, 7, 14, 21, 28];
+            dayLabels.forEach(day => {
+                const x = padding + (chartWidth / 29) * day;
+                ctx.fillText(`Day ${day + 1}`, x, height - padding + 20);
+            });
+        }
+
+        // Initialize
+        renderVegetableList();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (selectedVegetables.length > 0) {
+                drawChart();
+            }
+        });
+    </script>
+</body>
+</html>
