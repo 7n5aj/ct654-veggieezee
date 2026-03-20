@@ -1,17 +1,217 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .forms import UserRegistrationForm
-from django.shortcuts import render,HttpResponse,redirect
+from django.shortcuts import render, HttpResponse, redirect
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+from .predict_service import (
+    get_vegetables_list,
+    get_predictable_vegetables,
+    predict_price,
+    get_price_trends,
+    get_market_overview,
+    get_top_movers,
+    get_historical_prices,
+)
+
+from .live_data_service import (
+    fetch_live_prices,
+    get_all_live_prices,
+    get_live_price,
+    get_market_date,
+)
+
 
 def home(request):
-  return render(request,"website/index.html")
+    return render(request, "website/index.html")
+
+
 def trade(request):
-  return render(request,"trade/trade.html")
+    """
+    Dashboard view displaying current market prices and overview.
+    
+    Integrates live data from database and Kalimati API.
+    """
+    from prices.models import VegetablePrice
+    from datetime import date
+    
+    vegetables = get_vegetables_list()
+    overview = get_market_overview()
+    market_date = get_market_date()
+    
+    has_db_data = VegetablePrice.objects.filter(date=date.today()).exists()
+    is_live = has_db_data or market_date is not None
+    
+    context = {
+        'vegetables': vegetables,
+        'overview': overview,
+        'market_date': market_date or str(date.today()) if has_db_data else None,
+        'is_live': is_live,
+    }
+    return render(request, "trade/trade.html", context)
+
+
 def insights(request):
-  return render(request,"trade/insights.html")
+    """Market insights view with price trend analysis."""
+    vegetables = get_vegetables_list()
+    top_movers = get_top_movers()
+
+    context = {
+        'vegetables': vegetables,
+        'top_increases': top_movers.get('top_increases', []),
+        'top_decreases': top_movers.get('top_decreases', []),
+    }
+    return render(request, "trade/insights.html", context)
+
+
+def predictions(request):
+    """
+    Price prediction interface.
+    
+    Allows users to forecast vegetable prices for future dates.
+    Only shows vegetables with available prediction models.
+    """
+    vegetables = get_predictable_vegetables()
+    all_vegetables = get_vegetables_list()
+    result = None
+
+    if request.method == 'POST':
+        vegetable = request.POST.get('vegetable')
+        date = request.POST.get('date')
+
+        if vegetable and date:
+            result = predict_price(vegetable, date)
+
+    context = {
+        'vegetables': vegetables,
+        'all_vegetables': all_vegetables,
+        'result': result,
+        'predictable_count': len(vegetables),
+        'total_count': len(all_vegetables),
+    }
+    return render(request, "trade/predictions.html", context)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def predict_api(request):
+    """API endpoint for price predictions"""
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            data = request.POST
+        
+        vegetable = data.get('vegetable')
+        date = data.get('date')
+        
+        if not vegetable or not date:
+            return JsonResponse({
+                'success': False,
+                'error': 'Vegetable and date are required'
+            }, status=400)
+        
+        result = predict_price(vegetable, date)
+        return JsonResponse(result)
+    
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def vegetables_api(request):
+    """API endpoint to get list of vegetables"""
+    vegetables = get_vegetables_list()
+    return JsonResponse({'vegetables': vegetables})
+
+
+def historical_api(request):
+    """API endpoint for historical price data"""
+    vegetable = request.GET.get('vegetable')
+    days = int(request.GET.get('days', 30))
+    
+    if not vegetable:
+        return JsonResponse({
+            'success': False,
+            'error': 'Vegetable parameter is required'
+        }, status=400)
+    
+    trends = get_price_trends(vegetable, days=days)
+    
+    if trends:
+        return JsonResponse({
+            'success': True,
+            **trends
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': f'No data found for {vegetable}'
+        }, status=404)
+
+
+def market_overview_api(request):
+    """API endpoint for market overview"""
+    overview = get_market_overview()
+    top_movers = get_top_movers()
+    
+    return JsonResponse({
+        'success': True,
+        'overview': overview,
+        'top_movers': top_movers,
+    })
+
+
+def live_prices_api(request):
+    """API endpoint for live prices from Kalimati Market"""
+    try:
+        prices = get_all_live_prices()
+        market_date = get_market_date()
+        
+        return JsonResponse({
+            'success': True,
+            'date': market_date,
+            'prices': prices,
+            'count': len(prices),
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def live_price_api(request):
+    """API endpoint for a single commodity's live price"""
+    commodity = request.GET.get('commodity')
+    
+    if not commodity:
+        return JsonResponse({
+            'success': False,
+            'error': 'Commodity parameter is required'
+        }, status=400)
+    
+    price = get_live_price(commodity)
+    
+    if price:
+        return JsonResponse({
+            'success': True,
+            **price
+        })
+    else:
+        return JsonResponse({
+            'success': False,
+            'error': f'No live price found for {commodity}'
+        }, status=404)
+
+
 def signup(request): 
     """
     Handle user registration for VegePrediction platform

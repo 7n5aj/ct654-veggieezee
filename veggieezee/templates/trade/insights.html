@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,8 +16,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background-color: #f5f5f5;
             color: #333;
-                line-height: 1.6;
-
+            line-height: 1.6;
         }
 
         .header {
@@ -71,10 +71,18 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            text-decoration: none;
+            color: #333;
         }
 
         .nav-btn:hover {
             background: #f9f9f9;
+        }
+
+        .nav-btn.active {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
         }
 
         .user-controls {
@@ -370,6 +378,32 @@
             height: 3px;
             border-radius: 2px;
         }
+
+        @media (max-width: 1024px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-content {
+                padding: 0 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -382,10 +416,9 @@
             </div>
         </div>
         <nav class="nav-buttons">
-            <a href="{% url 'trade' %}" style="text-decoration: none;">
-            <button class="nav-btn">📊 Dashboard</button> </a>
-            <a href="{% url 'insights' %}" style="text-decoration: none;">
-            <button class="nav-btn">📈 Insights</button> </a>   
+            <a href="{% url 'trade' %}" class="nav-btn">📊 Dashboard</a>
+            <a href="{% url 'predictions' %}" class="nav-btn">🔮 Predictions</a>
+            <a href="{% url 'insights' %}" class="nav-btn active">📈 Insights</a>
         </nav>
         <div class="user-controls">
             <button class="icon-btn">⚙️</button>
@@ -395,14 +428,18 @@
     <main class="main-content">
         <div class="page-title">
             <h2>📈 Market Insights</h2>
-            <p>Compare prices and analyze trends</p>
+            <p>Compare prices and analyze trends across vegetables</p>
         </div>
 
         <div class="content-grid">
             <section class="chart-section">
                 <div class="chart-header">
                     <h3>Price Comparison</h3>
-                    <button class="date-selector">📅 Last 30 days</button>
+                    <select class="date-selector" id="dateRange">
+                        <option value="7">Last 7 days</option>
+                        <option value="14">Last 14 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                    </select>
                 </div>
                 <div class="chart-placeholder" id="chartPlaceholder">
                     <div class="chart-icon">📈</div>
@@ -417,7 +454,17 @@
                     <h3>Select Vegetables</h3>
                     <p>Choose up to 5 to compare (<span class="selection-count" id="selectionCount">0</span>/5 selected)</p>
                 </div>
-                <ul class="vegetable-list" id="vegetableList"></ul>
+                <ul class="vegetable-list" id="vegetableList">
+                    {% for veg in vegetables %}
+                    <li class="vegetable-item" data-vegetable="{{ veg.vegetable }}">
+                        <div class="vegetable-info">
+                            <div class="checkbox" data-veg="{{ veg.vegetable }}"></div>
+                            <span class="vegetable-name">{{ veg.vegetable|title }} <span class="vegetable-local">({{ veg.vegetable_nepali }})</span></span>
+                        </div>
+                        <span class="vegetable-price">--</span>
+                    </li>
+                    {% endfor %}
+                </ul>
             </aside>
         </div>
 
@@ -425,146 +472,112 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <span>📈</span>
-                    <h3>Top Price Increases</h3>
+                    <h3>Top Price Increases (7 days)</h3>
                 </div>
                 <ul class="stat-list">
+                    {% for item in top_increases %}
                     <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">1.</span> Carrot</div>
-                        <span class="stat-badge increase">+6.1%</span>
+                        <div class="stat-name">
+                            <span class="stat-number">{{ forloop.counter }}.</span> 
+                            {{ item.name }}
+                        </div>
+                        <span class="stat-badge increase">+{{ item.change_pct|floatformat:1 }}%</span>
                     </li>
+                    {% empty %}
                     <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">2.</span> Cauliflower</div>
-                        <span class="stat-badge increase">+3.6%</span>
+                        <div class="stat-name">No data available</div>
                     </li>
-                    <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">3.</span> Spinach</div>
-                        <span class="stat-badge increase">+2.8%</span>
-                    </li>
-                    <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">4.</span> Potato</div>
-                        <span class="stat-badge increase">+2.0%</span>
-                    </li>
+                    {% endfor %}
                 </ul>
             </div>
 
             <div class="stat-card">
                 <div class="stat-header">
                     <span>📉</span>
-                    <h3>Top Price Decreases</h3>
+                    <h3>Top Price Decreases (7 days)</h3>
                 </div>
                 <ul class="stat-list">
+                    {% for item in top_decreases %}
                     <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">1.</span> Tomato</div>
-                        <span class="stat-badge decrease">-9.4%</span>
+                        <div class="stat-name">
+                            <span class="stat-number">{{ forloop.counter }}.</span> 
+                            {{ item.name }}
+                        </div>
+                        <span class="stat-badge decrease">{{ item.change_pct|floatformat:1 }}%</span>
                     </li>
+                    {% empty %}
                     <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">2.</span> Onion</div>
-                        <span class="stat-badge decrease">-8.0%</span>
+                        <div class="stat-name">No data available</div>
                     </li>
-                    <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">3.</span> Cabbage</div>
-                        <span class="stat-badge decrease">-5.3%</span>
-                    </li>
-                    <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">4.</span> Garlic</div>
-                        <span class="stat-badge decrease">-4.1%</span>
-                    </li>
-                    <li class="stat-item">
-                        <div class="stat-name"><span class="stat-number">5.</span> Bitter Gourd</div>
-                        <span class="stat-badge decrease">-3.7%</span>
-                    </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>
     </main>
 
     <script>
-        // Vegetable data with prices and trend history
-        const vegetables = [
-            { name: 'Bitter Gourd', local: 'Tite Karela', price: 74, color: '#ef4444' },
-            { name: 'Cabbage', local: 'Banda', price: 40, color: '#f59e0b' },
-            { name: 'Carrot', local: 'Gajar', price: 41, color: '#10b981' },
-            { name: 'Cauliflower', local: 'Kauli', price: 85, color: '#3b82f6' },
-            { name: 'Cucumber', local: 'Kakro', price: 50, color: '#8b5cf6' },
-            { name: 'Garlic', local: 'Lasun', price: 165, color: '#ec4899' },
-            { name: 'Green Beans', local: 'Simi', price: 77, color: '#14b8a6' },
-            { name: 'Onion', local: 'Pyaaj', price: 43, color: '#f97316' },
-            { name: 'Potato', local: 'Aalu', price: 39, color: '#06b6d4' },
-            { name: 'Spinach', local: 'Palungo', price: 52, color: '#84cc16' },
-            { name: 'Tomato', local: 'Golbheda', price: 68, color: '#f43f5e' }
-        ];
-
-        // Generate random price history for each vegetable (30 days)
-        vegetables.forEach(veg => {
-            veg.history = [];
-            let basePrice = veg.price;
-            for (let i = 29; i >= 0; i--) {
-                const variation = (Math.random() - 0.5) * 10;
-                const price = Math.max(basePrice + variation, 10);
-                veg.history.push(Math.round(price));
-                basePrice = price;
-            }
-        });
-
+        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
         let selectedVegetables = [];
         const MAX_SELECTION = 5;
+        let vegetableData = {};
 
-        // Render vegetable list
-        function renderVegetableList() {
-            const list = document.getElementById('vegetableList');
-            list.innerHTML = '';
-
-            vegetables.forEach((veg, index) => {
-                const li = document.createElement('li');
-                li.className = 'vegetable-item';
-                
-                const isSelected = selectedVegetables.includes(veg.name);
-                const isDisabled = !isSelected && selectedVegetables.length >= MAX_SELECTION;
-                
-                if (isDisabled) {
-                    li.classList.add('disabled');
-                }
-
-                li.innerHTML = `
-                    <div class="vegetable-info">
-                        <div class="checkbox ${isSelected ? 'checked' : ''}" data-veg="${veg.name}"></div>
-                        <span class="vegetable-name">${veg.name} <span class="vegetable-local">(${veg.local})</span></span>
-                    </div>
-                    <span class="vegetable-price">Rs. ${veg.price}</span>
-                `;
-
-                if (!isDisabled) {
-                    li.addEventListener('click', () => toggleVegetable(veg.name));
-                }
-
-                list.appendChild(li);
+        // Initialize vegetable list interactions
+        document.querySelectorAll('.vegetable-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const vegName = item.dataset.vegetable;
+                toggleVegetable(vegName, item);
             });
+        });
 
-            updateSelectionCount();
-        }
-
-        function toggleVegetable(vegName) {
+        function toggleVegetable(vegName, itemElement) {
+            const checkbox = itemElement.querySelector('.checkbox');
             const index = selectedVegetables.indexOf(vegName);
-            
+
             if (index > -1) {
                 selectedVegetables.splice(index, 1);
+                checkbox.classList.remove('checked');
             } else {
                 if (selectedVegetables.length < MAX_SELECTION) {
                     selectedVegetables.push(vegName);
+                    checkbox.classList.add('checked');
                 }
             }
 
-            renderVegetableList();
+            updateSelectionCount();
             updateChart();
         }
 
         function updateSelectionCount() {
             document.getElementById('selectionCount').textContent = selectedVegetables.length;
+
+            document.querySelectorAll('.vegetable-item').forEach(item => {
+                const vegName = item.dataset.vegetable;
+                const isSelected = selectedVegetables.includes(vegName);
+                const isDisabled = !isSelected && selectedVegetables.length >= MAX_SELECTION;
+
+                if (isDisabled) {
+                    item.classList.add('disabled');
+                } else {
+                    item.classList.remove('disabled');
+                }
+            });
         }
 
-        function updateChart() {
+        async function fetchVegetableData(vegetable, days) {
+            try {
+                const response = await fetch(`/api/historical/?vegetable=${vegetable}&days=${days}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return null;
+            }
+        }
+
+        async function updateChart() {
             const placeholder = document.getElementById('chartPlaceholder');
             const canvas = document.getElementById('chartCanvas');
+            const days = parseInt(document.getElementById('dateRange').value);
 
             if (selectedVegetables.length === 0) {
                 placeholder.style.display = 'flex';
@@ -574,51 +587,52 @@
 
             placeholder.style.display = 'none';
             canvas.classList.add('active');
+
+            // Fetch data for all selected vegetables
+            const dataPromises = selectedVegetables.map(veg => fetchVegetableData(veg, days));
+            const results = await Promise.all(dataPromises);
+
+            vegetableData = {};
+            results.forEach((data, index) => {
+                if (data && data.success) {
+                    vegetableData[selectedVegetables[index]] = data;
+                }
+            });
+
             drawChart();
         }
 
         function drawChart() {
             const canvas = document.getElementById('chartCanvas');
             const ctx = canvas.getContext('2d');
-            
-            // Set canvas size
+
             canvas.width = canvas.offsetWidth;
             canvas.height = 400;
 
             const width = canvas.width;
             const height = canvas.height;
-            const padding = 50;
+            const padding = 60;
             const chartWidth = width - padding * 2;
             const chartHeight = height - padding * 2;
 
-            // Clear canvas
             ctx.clearRect(0, 0, width, height);
 
-            // Get selected vegetable data
-            const selectedData = vegetables.filter(v => selectedVegetables.includes(v.name));
-            
-            if (selectedData.length === 0) return;
-
-            // Find min and max prices for scaling
-            let minPrice = Infinity;
-            let maxPrice = -Infinity;
-            selectedData.forEach(veg => {
-                veg.history.forEach(price => {
-                    minPrice = Math.min(minPrice, price);
-                    maxPrice = Math.max(maxPrice, price);
-                });
+            const allPrices = [];
+            Object.values(vegetableData).forEach(data => {
+                if (data.prices) {
+                    allPrices.push(...data.prices);
+                }
             });
 
-            const priceRange = maxPrice - minPrice;
-            const priceStep = Math.ceil(priceRange / 5);
-            minPrice = Math.floor(minPrice / priceStep) * priceStep;
-            maxPrice = Math.ceil(maxPrice / priceStep) * priceStep;
+            if (allPrices.length === 0) return;
 
-            // Draw grid and axes
+            let minPrice = Math.min(...allPrices) * 0.9;
+            let maxPrice = Math.max(...allPrices) * 1.1;
+
+            // Draw grid
             ctx.strokeStyle = '#e5e5e5';
             ctx.lineWidth = 1;
 
-            // Horizontal grid lines
             for (let i = 0; i <= 5; i++) {
                 const y = padding + (chartHeight / 5) * i;
                 ctx.beginPath();
@@ -626,7 +640,6 @@
                 ctx.lineTo(width - padding, y);
                 ctx.stroke();
 
-                // Y-axis labels
                 ctx.fillStyle = '#999';
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'right';
@@ -635,13 +648,17 @@
             }
 
             // Draw lines for each vegetable
-            selectedData.forEach((veg, vegIndex) => {
-                ctx.strokeStyle = veg.color;
+            let colorIndex = 0;
+            Object.entries(vegetableData).forEach(([vegName, data]) => {
+                if (!data.prices || data.prices.length === 0) return;
+
+                const color = colors[colorIndex % colors.length];
+                ctx.strokeStyle = color;
                 ctx.lineWidth = 2;
                 ctx.beginPath();
 
-                veg.history.forEach((price, dayIndex) => {
-                    const x = padding + (chartWidth / (veg.history.length - 1)) * dayIndex;
+                data.prices.forEach((price, dayIndex) => {
+                    const x = padding + (chartWidth / (data.prices.length - 1)) * dayIndex;
                     const y = padding + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
 
                     if (dayIndex === 0) {
@@ -654,28 +671,31 @@
                 ctx.stroke();
 
                 // Draw legend
-                const legendY = 20 + vegIndex * 25;
-                ctx.fillStyle = veg.color;
+                const legendY = 20 + colorIndex * 25;
+                ctx.fillStyle = color;
                 ctx.fillRect(width - 180, legendY, 20, 3);
                 ctx.fillStyle = '#333';
                 ctx.font = '14px sans-serif';
                 ctx.textAlign = 'left';
-                ctx.fillText(veg.name, width - 155, legendY + 3);
+                ctx.fillText(vegName.charAt(0).toUpperCase() + vegName.slice(1), width - 155, legendY + 3);
+
+                colorIndex++;
             });
 
-            // X-axis labels (days)
+            // X-axis labels
             ctx.fillStyle = '#999';
             ctx.font = '12px sans-serif';
             ctx.textAlign = 'center';
-            const dayLabels = [0, 7, 14, 21, 28];
-            dayLabels.forEach(day => {
-                const x = padding + (chartWidth / 29) * day;
+            const days = parseInt(document.getElementById('dateRange').value);
+            const labels = [0, Math.floor(days/4), Math.floor(days/2), Math.floor(3*days/4), days-1];
+            labels.forEach(day => {
+                const x = padding + (chartWidth / (days-1)) * day;
                 ctx.fillText(`Day ${day + 1}`, x, height - padding + 20);
             });
         }
 
-        // Initialize
-        renderVegetableList();
+        // Date range change handler
+        document.getElementById('dateRange').addEventListener('change', updateChart);
 
         // Handle window resize
         window.addEventListener('resize', () => {
@@ -683,6 +703,26 @@
                 drawChart();
             }
         });
+
+        // Load initial prices for the list
+        async function loadInitialPrices() {
+            const items = document.querySelectorAll('.vegetable-item');
+            for (const item of items) {
+                const vegName = item.dataset.vegetable;
+                const priceElement = item.querySelector('.vegetable-price');
+                
+                try {
+                    const data = await fetchVegetableData(vegName, 1);
+                    if (data && data.success && data.current_price) {
+                        priceElement.textContent = `Rs. ${data.current_price}`;
+                    }
+                } catch (e) {
+                    // Keep default "--"
+                }
+            }
+        }
+
+        loadInitialPrices();
     </script>
 </body>
 </html>

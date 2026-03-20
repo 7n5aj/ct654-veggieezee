@@ -24,6 +24,16 @@ urlpatterns = [
     path('login/', views.loginpage, name='login'),
     path('trade/', views.trade, name='trade'),
     path('insights/', views.insights, name='insights'),
+    path('predictions/', views.predictions, name='predictions'),
+    
+    # API endpoints
+    path('api/predict/', views.predict_api, name='predict_api'),
+    path('api/vegetables/', views.vegetables_api, name='vegetables_api'),
+    path('api/historical/', views.historical_api, name='historical_api'),
+    path('api/market-overview/', views.market_overview_api, name='market_overview_api'),
+    path('api/live-prices/', views.live_prices_api, name='live_prices_api'),
+    path('api/live-price/', views.live_price_api, name='live_price_api'),
+    
     path('signup/', include('signup.urls')),
     path('forgot-password/', auth_views.PasswordResetView.as_view(
         template_name='website/forgot_password.html'
