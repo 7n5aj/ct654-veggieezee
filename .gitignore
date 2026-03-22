@@ -42,15 +42,30 @@ db.sqlite3-journal
 *~
 .DS_Store
 
-# Documentation (upload separately)
-README.md
+# Documentation (AI-generated - upload separately if needed)
+# But allow README.md
 DEMO_SCRIPT.md
 TECHNICAL_REPORT.md
+SELENIUM_BYPASS_IMPLEMENTATION.md
+DAILY_UPDATE_SYSTEM.md
+README_GITHUB.md
+README_SETUP.md
+README_CLEAN.md
+PUSH_READY_SUMMARY.txt
+PRE_PUSH_CHECKLIST.txt
 *.plan.md
 
 # Terminals and logs
 terminals/
-*.txt
+debug.log
+*.log
+
+# Temporary test files (but NOT requirements.txt!)
+test_*.py
+check_*.py
+manual_sync.py
+verify_*.py
+analyze_*.py
 
 # Environment variables
 .env

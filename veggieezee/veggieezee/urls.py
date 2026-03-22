@@ -25,6 +25,7 @@ urlpatterns = [
     path('trade/', views.trade, name='trade'),
     path('insights/', views.insights, name='insights'),
     path('predictions/', views.predictions, name='predictions'),
+    path('about-model/', views.about_model, name='about_model'),
     
     # API endpoints
     path('api/predict/', views.predict_api, name='predict_api'),

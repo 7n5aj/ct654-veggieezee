@@ -1,0 +1,453 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nepal Veggie Price Tracker - About the Model</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: #10b981;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .brand-text h1 {
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .brand-text p {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            padding: 0.5rem 1.25rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .nav-btn:hover {
+            background: #f9f9f9;
+        }
+
+        .nav-btn.active {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .user-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 16px;
+            padding: 3rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .hero-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            line-height: 1.7;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .info-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #6366f1;
+        }
+
+        .info-card p {
+            color: #666;
+            margin-bottom: 0.75rem;
+            line-height: 1.7;
+        }
+
+        .info-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-card li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: #555;
+        }
+
+        .info-card li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .feature-item {
+            padding: 1rem;
+            background: #f8f9ff;
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+        }
+
+        .feature-item .title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-item .desc {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .pipeline-section {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .pipeline-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .pipeline-step {
+            flex: 1;
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 12px;
+            border: 2px solid #10b981;
+        }
+
+        .pipeline-step .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pipeline-step .title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .pipeline-step .desc {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .pipeline-arrow {
+            font-size: 1.5rem;
+            color: #10b981;
+        }
+
+        .stats-highlight {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9ff 0%, #f3f4ff 100%);
+            border-radius: 12px;
+        }
+
+        .stat-box .number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #6366f1;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-box .label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        @media (max-width: 1024px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline-flow {
+                flex-direction: column;
+            }
+
+            .pipeline-arrow {
+                transform: rotate(90deg);
+            }
+
+            .stats-highlight {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">🥬</div>
+            <div class="brand-text">
+                <h1>Nepal Veggie</h1>
+                <p>Price Tracker</p>
+            </div>
+        </div>
+        <nav class="nav-buttons">
+            <a href="{% url 'trade' %}" class="nav-btn">📊 Dashboard</a>
+            <a href="{% url 'predictions' %}" class="nav-btn">🔮 Predictions</a>
+            <a href="{% url 'insights' %}" class="nav-btn">📈 Insights</a>
+            <a href="{% url 'about_model' %}" class="nav-btn active">🧠 About Model</a>
+        </nav>
+        <div class="user-controls">
+            <button class="icon-btn">⚙️</button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="hero-section">
+            <h1>🧠 XGBoost Machine Learning Model</h1>
+            <p>Our prediction system uses gradient boosting machine learning trained on historical Kalimati market data to forecast vegetable prices with high accuracy.</p>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>🎯 Model Architecture</h3>
+                <p>The system employs XGBoost (Extreme Gradient Boosting), a powerful ensemble learning method that combines multiple decision trees for robust predictions.</p>
+                <ul>
+                    <li>Algorithm: XGBoost Regressor</li>
+                    <li>Input Features: 62 engineered features</li>
+                    <li>Output: Log-transformed NPR price</li>
+                    <li>Training Data: Historical Kalimati market prices</li>
+                    <li>Fallback: Rule-based model for robustness</li>
+                </ul>
+            </div>
+
+            <div class="info-card">
+                <h3>📊 Feature Engineering</h3>
+                <p>The model analyzes 62 carefully engineered features to capture complex patterns in vegetable pricing:</p>
+                <ul>
+                    <li>30-day historical price lags (lag_1 to lag_30)</li>
+                    <li>Calendar features (day, month, year, day of week)</li>
+                    <li>Seasonal indicators (season encoding)</li>
+                    <li>Festival impact factors (major Nepali festivals)</li>
+                    <li>Weekly and monthly cycles</li>
+                    <li>Vegetable type encoding (label encoded names)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="pipeline-section">
+            <h3>🔄 Data Pipeline</h3>
+            <p>Our system combines historical data with real-time market prices for accurate, up-to-date predictions:</p>
+            
+            <div class="pipeline-flow">
+                <div class="pipeline-step">
+                    <div class="icon">📊</div>
+                    <div class="title">Historical Data</div>
+                    <div class="desc">Excel dataset (2008-2024)</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <div class="icon">🌐</div>
+                    <div class="title">Live API</div>
+                    <div class="desc">Kalimati daily prices</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <div class="icon">💾</div>
+                    <div class="title">Database</div>
+                    <div class="desc">Auto-sync storage</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <div class="icon">🧠</div>
+                    <div class="title">XGBoost</div>
+                    <div class="desc">Price prediction</div>
+                </div>
+            </div>
+
+            <div class="stats-highlight">
+                <div class="stat-box">
+                    <div class="number">62</div>
+                    <div class="label">Features</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">30</div>
+                    <div class="label">Lag Days</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">17+</div>
+                    <div class="label">Vegetables</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">15+</div>
+                    <div class="label">Years Data</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <h3>🔧 Technical Implementation</h3>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="title">Backend Framework</div>
+                    <div class="desc">Django for robust web application</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">ML Library</div>
+                    <div class="desc">XGBoost with scikit-learn</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">Data Processing</div>
+                    <div class="desc">Pandas & NumPy pipelines</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">Live Data Source</div>
+                    <div class="desc">Kalimati Market API</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">Auto Sync</div>
+                    <div class="desc">Daily middleware-based sync</div>
+                </div>
+                <div class="feature-item">
+                    <div class="title">Model Persistence</div>
+                    <div class="desc">Joblib serialization (.pkl)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card" style="margin-top: 1.5rem;">
+            <h3>✨ Key Features</h3>
+            <ul>
+                <li><strong>Hybrid Data Approach:</strong> Combines static historical data (Excel) with dynamic live prices (API + Database)</li>
+                <li><strong>Automatic Updates:</strong> Middleware checks for new data daily and syncs automatically</li>
+                <li><strong>Robust Predictions:</strong> XGBoost primary model with rule-based fallback</li>
+                <li><strong>Smart Mapping:</strong> Handles commodity name variations between API and training data</li>
+                <li><strong>Confidence Intervals:</strong> Dynamic price ranges based on model uncertainty</li>
+                <li><strong>Real-time Dashboard:</strong> Live badges, price trends, and predictability indicators</li>
+            </ul>
+        </div>
+    </main>
+</body>
+</html>

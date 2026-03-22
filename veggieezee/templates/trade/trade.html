@@ -400,6 +400,7 @@
             <a href="{% url 'trade' %}" class="nav-btn active">📊 Dashboard</a>
             <a href="{% url 'predictions' %}" class="nav-btn">🔮 Predictions</a>
             <a href="{% url 'insights' %}" class="nav-btn">📈 Insights</a>
+            <a href="{% url 'about_model' %}" class="nav-btn">🧠 About Model</a>
         </nav>
         <div class="user-controls">
             <button class="icon-btn">⚙️</button>
@@ -426,7 +427,12 @@
         </style>
 
         <section class="quick-predict-section">
-            <h3>🔮 Quick Price Prediction</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">🔮 Quick Price Prediction</h3>
+                <div style="padding: 0.4rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+                    🧠 XGBoost Model
+                </div>
+            </div>
             <form class="quick-predict-form" action="{% url 'predictions' %}" method="POST">
                 {% csrf_token %}
                 <div class="form-group">

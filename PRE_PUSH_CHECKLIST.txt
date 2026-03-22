@@ -1,0 +1,141 @@
+# Pre-Push Checklist
+
+## ✅ Files TO PUSH (Essential)
+
+### Core Application
+- [x] `veggieezee/` - Main Django app
+  - [x] `settings.py` - Django settings
+  - [x] `urls.py` - URL routing
+  - [x] `views.py` - View functions
+  - [x] `predict_service.py` - XGBoost prediction logic
+  - [x] `live_data_service.py` - API integration
+  - [x] `selenium_fetcher.py` - Bot bypass module
+  - [x] `middleware.py` - Auto-sync middleware
+  - [x] `manage.py` - Django management
+
+### Models & Data
+- [x] `models/nepal_veg_price_xgboost.pkl` - XGBoost model
+- [x] `models/nepal_veg_label_encoder.pkl` - Label encoder
+- [x] `predict/ml/data.xlsx` - Historical training data
+
+### Database Models
+- [x] `prices/` - Price models app
+  - [x] `models.py`
+  - [x] `admin.py`
+  - [x] `management/commands/sync_prices.py`
+
+### Templates
+- [x] `templates/trade/trade.html` - Dashboard
+- [x] `templates/trade/predictions.html` - Predictions page
+- [x] `templates/trade/insights.html` - Insights page
+- [x] `templates/trade/about_model.html` - Model info page
+- [x] `templates/website/` - Landing pages
+
+### Configuration
+- [x] `requirements.txt` - Python dependencies
+- [x] `.gitignore` - Git ignore rules
+- [x] `setup_verify.py` - Post-clone verification script
+
+## ❌ Files NOT TO PUSH (Excluded by .gitignore)
+
+### AI-Generated Documentation
+- [ ] `README.md`
+- [ ] `README_GITHUB.md`
+- [ ] `SELENIUM_BYPASS_IMPLEMENTATION.md`
+- [ ] `DAILY_UPDATE_SYSTEM.md`
+- [ ] `*.plan.md`
+- [ ] Any other `.md` files
+
+### Environment & Cache
+- [ ] `.venv/` - Virtual environment
+- [ ] `__pycache__/` - Python cache
+- [ ] `*.pyc` - Compiled Python
+- [ ] `db.sqlite3` - Local database (users create their own)
+
+### Temporary Files
+- [ ] `debug.log` - Log files
+- [ ] `test_*.py` - Test scripts
+- [ ] `check_*.py` - Verification scripts
+- [ ] `manual_sync.py` - Manual tools
+- [ ] `terminals/` - Terminal logs
+
+### IDE & System
+- [ ] `.vscode/` - VS Code settings
+- [ ] `.idea/` - PyCharm settings
+- [ ] `assets/` - Screenshot/temp assets
+
+## 📋 Pre-Push Commands
+
+```bash
+# 1. Check what will be committed
+git status
+
+# 2. Review changes
+git diff
+
+# 3. Add files (the ones we want)
+git add .
+
+# 4. Check again to ensure no unwanted files
+git status
+
+# 5. If any markdown files appear, they should be ignored
+# If db.sqlite3 appears, reset it:
+git reset db.sqlite3
+
+# 6. Commit
+git commit -m "Your commit message"
+
+# 7. Push
+git push origin your-branch
+```
+
+## 🧪 Clone Test
+
+After pushing, test on a fresh directory:
+
+```bash
+# Clone
+git clone <repo-url>
+cd ct654-veggieezee
+
+# Verify
+cd veggieezee
+python setup_verify.py
+
+# Setup
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+
+# Initialize
+python manage.py migrate
+python manage.py sync_prices
+
+# Run
+python manage.py runserver 8080
+```
+
+## ✅ Success Criteria
+
+After cloning, users should be able to:
+1. Install dependencies without errors
+2. Run migrations successfully
+3. Sync initial data (takes ~15-20 seconds)
+4. Start server and access website
+5. See predictions working with XGBoost model
+6. View fresh data from Kalimati API
+
+## 🚨 Common Issues & Solutions
+
+**Issue**: `ModuleNotFoundError: No module named 'django'`
+**Fix**: `pip install -r requirements.txt`
+
+**Issue**: ChromeDriver not found
+**Fix**: Automatic download on first `sync_prices`
+
+**Issue**: No data showing
+**Fix**: Run `python manage.py sync_prices`
+
+**Issue**: Bot protection error
+**Fix**: Normal - selenium will retry automatically

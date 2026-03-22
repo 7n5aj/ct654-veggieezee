@@ -161,6 +161,24 @@
             margin-top: 0.25rem;
         }
 
+        .model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.75rem;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+
+        .model-badge .icon {
+            font-size: 1rem;
+        }
+
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -348,7 +366,7 @@
 
         .factors-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 0.75rem;
         }
 
@@ -369,6 +387,43 @@
             font-size: 1rem;
             font-weight: 600;
             color: #333;
+        }
+
+        .model-info {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9ff 0%, #f3f4ff 100%);
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .model-info h5 {
+            font-size: 0.9rem;
+            color: #6366f1;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .model-info p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .model-features {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .model-feature-tag {
+            padding: 0.25rem 0.75rem;
+            background: white;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #6366f1;
+            font-weight: 500;
         }
 
         .quick-predictions {
@@ -472,6 +527,7 @@
             <a href="{% url 'trade' %}" class="nav-btn">📊 Dashboard</a>
             <a href="{% url 'predictions' %}" class="nav-btn active">🔮 Predictions</a>
             <a href="{% url 'insights' %}" class="nav-btn">📈 Insights</a>
+            <a href="{% url 'about_model' %}" class="nav-btn">🧠 About Model</a>
         </nav>
         <div class="user-controls">
             <button class="icon-btn">⚙️</button>
@@ -481,7 +537,7 @@
     <main class="main-content">
         <div class="page-title">
             <h2>🔮 Price Predictions</h2>
-            <p>Forecast vegetable prices using AI-powered analysis</p>
+            <p>Forecast vegetable prices using XGBoost machine learning model trained on Kalimati market data</p>
         </div>
 
         <div class="content-grid">
@@ -489,6 +545,10 @@
                 <div class="form-header">
                     <h3>Make a Prediction</h3>
                     <p>Select a vegetable and future date</p>
+                    <div class="model-badge">
+                        <span class="icon">🧠</span>
+                        <span>XGBoost ML Model</span>
+                    </div>
                     <p class="predictable-info">{{ predictable_count }} vegetables available for prediction</p>
                 </div>
 
@@ -563,23 +623,32 @@
                     </div>
 
                     <div class="factors-section">
-                        <h4>Prediction Factors</h4>
+                        <h4>XGBoost Model Insights</h4>
                         <div class="factors-grid">
                             <div class="factor-item">
-                                <div class="name">Base Price</div>
-                                <div class="value">Rs. {{ result.factors.base_price }}</div>
+                                <div class="name">Historical Lag</div>
+                                <div class="value">30 Days</div>
                             </div>
                             <div class="factor-item">
-                                <div class="name">Seasonal</div>
-                                <div class="value">{{ result.factors.seasonal_factor }}x</div>
+                                <div class="name">Feature Count</div>
+                                <div class="value">62 Features</div>
                             </div>
                             <div class="factor-item">
-                                <div class="name">Festival</div>
-                                <div class="value">{{ result.factors.festival_factor }}x</div>
+                                <div class="name">Model Type</div>
+                                <div class="value">XGBoost</div>
                             </div>
-                            <div class="factor-item">
-                                <div class="name">Trend</div>
-                                <div class="value">{{ result.factors.trend_factor }}x</div>
+                        </div>
+                        
+                        <div class="model-info">
+                            <h5>How the Model Works</h5>
+                            <p>This prediction uses a gradient boosting machine learning model trained on historical Kalimati market data. The model analyzes 62 features including:</p>
+                            <div class="model-features">
+                                <span class="model-feature-tag">30-day price lags</span>
+                                <span class="model-feature-tag">Calendar features (day, month, year)</span>
+                                <span class="model-feature-tag">Seasonal patterns</span>
+                                <span class="model-feature-tag">Festival impacts</span>
+                                <span class="model-feature-tag">Weekly cycles</span>
+                                <span class="model-feature-tag">Vegetable type encoding</span>
                             </div>
                         </div>
                     </div>

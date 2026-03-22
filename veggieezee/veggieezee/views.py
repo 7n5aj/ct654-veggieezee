@@ -35,7 +35,7 @@ def trade(request):
     """
     Dashboard view displaying current market prices and overview.
     
-    Integrates live data from database and Kalimati API.
+    Note: Auto-sync is handled by AutoSyncMiddleware.
     """
     from prices.models import VegetablePrice
     from datetime import date
@@ -67,6 +67,11 @@ def insights(request):
         'top_decreases': top_movers.get('top_decreases', []),
     }
     return render(request, "trade/insights.html", context)
+
+
+def about_model(request):
+    """About the XGBoost model and system architecture."""
+    return render(request, 'trade/about_model.html')
 
 
 def predictions(request):

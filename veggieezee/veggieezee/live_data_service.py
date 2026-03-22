@@ -3,12 +3,16 @@ Live Data Integration Service
 
 Handles real-time data fetching from Nepal's Kalimati Market API.
 Provides caching and error handling for reliable data access.
+Uses Selenium with headless Chrome to bypass bot protection.
 """
-import requests
+import cloudscraper
 from requests.exceptions import RequestException, Timeout, ConnectionError
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List
 import json
+import logging
+
+logger = logging.getLogger('veggieezee.live_data_service')
 
 KALIMATI_API_URL = "https://kalimatimarket.gov.np/api/daily-prices/en"
 
@@ -16,43 +20,107 @@ _cached_data = None
 _cache_timestamp = None
 CACHE_DURATION_MINUTES = 30
 
+scraper = cloudscraper.create_scraper(
+    browser={
+        'browser': 'chrome',
+        'platform': 'windows',
+        'desktop': True
+    }
+)
+
+# Import selenium fetcher
+try:
+    from .selenium_fetcher import fetch_with_selenium
+    SELENIUM_AVAILABLE = True
+    logger.info("Selenium fetcher available for bot protection bypass")
+except ImportError:
+    SELENIUM_AVAILABLE = False
+    logger.warning("Selenium not available, will use cloudscraper only")
+
 
 def fetch_live_prices(timeout: int = 3) -> Optional[Dict]:
     """
     Fetch current vegetable prices from Kalimati Market API.
     
-    Uses in-memory caching to reduce API calls. Falls back to cached data
-    if API is unavailable.
+    Uses a two-tier approach:
+    1. First tries fast cloudscraper (3-5 seconds)
+    2. If bot protection detected, falls back to Selenium (15-20 seconds)
+    
+    Uses in-memory caching to reduce API calls.
     
     Args:
-        timeout: Request timeout in seconds (default: 3)
+        timeout: Request timeout in seconds for cloudscraper (default: 3)
+                 Selenium uses extended timeout (30s) automatically
         
     Returns:
         dict: API response containing prices data, or None if unavailable
     """
     global _cached_data, _cache_timestamp
     
+    # Check cache first
     if _cached_data and _cache_timestamp:
         cache_age = datetime.now() - _cache_timestamp
         if cache_age < timedelta(minutes=CACHE_DURATION_MINUTES):
+            logger.debug(f"Using cached data (age: {cache_age.seconds}s)")
             return _cached_data
     
+    # Try Method 1: Fast cloudscraper
     try:
-        response = requests.get(KALIMATI_API_URL, timeout=timeout)
+        logger.info("Attempting fast fetch with cloudscraper...")
+        
+        response = scraper.get(KALIMATI_API_URL, timeout=timeout)
         response.raise_for_status()
         
-        data = response.json()
+        content_type = response.headers.get('Content-Type', '')
         
-        if data.get('status') == 200 and 'prices' in data:
-            _cached_data = data
-            _cache_timestamp = datetime.now()
-            return data
-        
-        return _cached_data if _cached_data else None
+        # Check if we got HTML (challenge page)
+        if 'html' in content_type:
+            logger.warning("Bot protection challenge detected (HTML response)")
+            # Don't return yet, try selenium next
+        else:
+            # Try to parse JSON
+            data = response.json()
+            
+            if 'message' in data and 'bot-protection' in data.get('message', '').lower():
+                logger.warning(f"Bot protection message: {data['message']}")
+            elif data.get('status') == 200 and 'prices' in data:
+                _cached_data = data
+                _cache_timestamp = datetime.now()
+                logger.info(f"Cloudscraper success: {len(data['prices'])} prices for {data.get('date')}")
+                return data
     
-    except (RequestException, Timeout, ConnectionError, OSError, Exception) as e:
-        print(f"API fetch error: {e}")
-        return _cached_data if _cached_data else None
+    except json.JSONDecodeError:
+        logger.debug("Cloudscraper returned HTML, trying Selenium...")
+    except (RequestException, Timeout, ConnectionError) as e:
+        logger.debug(f"Cloudscraper failed: {type(e).__name__}")
+    except Exception as e:
+        logger.error(f"Unexpected error with cloudscraper: {e}")
+    
+    # Method 2: Selenium (slower but bypasses bot protection)
+    if SELENIUM_AVAILABLE:
+        try:
+            logger.info("Falling back to Selenium (this may take 15-20 seconds)...")
+            data = fetch_with_selenium(KALIMATI_API_URL, timeout=30)
+            
+            if data and data.get('status') == 200 and 'prices' in data:
+                _cached_data = data
+                _cache_timestamp = datetime.now()
+                logger.info(f"Selenium success: {len(data['prices'])} prices for {data.get('date')}")
+                return data
+            else:
+                logger.warning("Selenium fetch returned no valid data")
+        except Exception as e:
+            logger.error(f"Selenium fetch error: {type(e).__name__}: {e}")
+    else:
+        logger.warning("Selenium not available, cannot bypass bot protection")
+    
+    # Final fallback: return cached data if available
+    if _cached_data:
+        logger.info("Using cached data as fallback")
+        return _cached_data
+    
+    logger.error("All fetch methods failed and no cached data available")
+    return None
 
 
 def get_live_price(commodity_name: str) -> Optional[Dict]:
@@ -227,7 +295,7 @@ def is_api_available() -> bool:
     Check if the Kalimati API is available
     """
     try:
-        response = requests.get(KALIMATI_API_URL, timeout=5)
+        response = scraper.get(KALIMATI_API_URL, timeout=5)
         return response.status_code == 200
     except Exception:
         return False
