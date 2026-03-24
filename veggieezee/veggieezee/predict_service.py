@@ -124,9 +124,9 @@ KALIMATI_TO_TRAINING_MAP = {
     'Christophine': 'Chayote',
     'Mushroom(Kanya)': 'Mushroom',
     'Mushroom(Button)': 'Mushroom',
-    'Neuro': 'Fenugreek Leaves',
     'Sword Bean': 'Cluster Beans',
     'Bakula': 'Colocasia Leaves',
+    'Jack Fruit': 'Jackfruit (Young)',
 }
 
 # List of all vegetables in training dataset (for validation)
