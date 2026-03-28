@@ -11,12 +11,15 @@ import json
 
 from .predict_service import (
     get_vegetables_list,
-    get_predictable_vegetables,
+    get_prediction_vegetable_groups,
+    get_all_prediction_choices,
     predict_price,
     get_price_trends,
     get_market_overview,
     get_top_movers,
     get_historical_prices,
+    get_training_class_count,
+    get_xgboost_feature_count,
 )
 
 from .live_data_service import (
@@ -37,20 +40,30 @@ def trade(request):
     
     Note: Auto-sync is handled by AutoSyncMiddleware.
     """
-    from prices.models import VegetablePrice
-    from datetime import date
-    
+    import json
+    from decimal import Decimal
+    from prices.snapshot import effective_price_date
+
+    def _json_default(o):
+        if isinstance(o, Decimal):
+            return float(o)
+        raise TypeError(type(o))
+
     vegetables = get_vegetables_list()
     overview = get_market_overview()
     market_date = get_market_date()
-    
-    has_db_data = VegetablePrice.objects.filter(date=date.today()).exists()
+
+    snapshot_date = effective_price_date()
+    has_db_data = snapshot_date is not None
     is_live = has_db_data or market_date is not None
-    
+
+    overview_json = json.dumps(overview or [], default=_json_default)
+
     context = {
         'vegetables': vegetables,
         'overview': overview,
-        'market_date': market_date or str(date.today()) if has_db_data else None,
+        'overview_json': overview_json,
+        'market_date': market_date or (str(snapshot_date) if snapshot_date else None),
         'is_live': is_live,
     }
     return render(request, "trade/trade.html", context)
@@ -71,7 +84,10 @@ def insights(request):
 
 def about_model(request):
     """About the XGBoost model and system architecture."""
-    return render(request, 'trade/about_model.html')
+    return render(request, 'trade/about_model.html', {
+        'training_class_count': get_training_class_count(),
+        'feature_count': get_xgboost_feature_count(),
+    })
 
 
 def predictions(request):
@@ -79,9 +95,10 @@ def predictions(request):
     Price prediction interface.
     
     Allows users to forecast vegetable prices for future dates.
-    Only shows vegetables with available prediction models.
+    Lists Kalimati catalog items plus other trained classes backed by archive data.
     """
-    vegetables = get_predictable_vegetables()
+    vegetables_live, vegetables_model_only = get_prediction_vegetable_groups()
+    vegetables = get_all_prediction_choices()
     all_vegetables = get_vegetables_list()
     result = None
 
@@ -92,12 +109,21 @@ def predictions(request):
         if vegetable and date:
             result = predict_price(vegetable, date)
 
+    from django.utils import timezone
+
     context = {
         'vegetables': vegetables,
+        'vegetables_live': vegetables_live,
+        'vegetables_model_only': vegetables_model_only,
         'all_vegetables': all_vegetables,
         'result': result,
+        'predictable_live_count': len(vegetables_live),
+        'predictable_model_only_count': len(vegetables_model_only),
         'predictable_count': len(vegetables),
         'total_count': len(all_vegetables),
+        'training_class_count': get_training_class_count(),
+        'feature_count': get_xgboost_feature_count(),
+        'today': timezone.localdate().isoformat(),
     }
     return render(request, "trade/predictions.html", context)
 

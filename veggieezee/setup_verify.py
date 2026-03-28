@@ -51,6 +51,8 @@ def check_project_structure():
         'veggieezee/settings.py',
         'models/nepal_veg_price_xgboost.pkl',
         'models/nepal_veg_label_encoder.pkl',
+        'predict/ml/processed_vegetable_prices.csv',
+        'predict/ml/kalimati_training_aliases.csv',
         'predict/ml/data.xlsx',
     ]
     

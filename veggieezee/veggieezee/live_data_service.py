@@ -14,6 +14,8 @@ import logging
 
 logger = logging.getLogger('veggieezee.live_data_service')
 
+from .predict_service import get_vegetable_nepali_label
+
 KALIMATI_API_URL = "https://kalimatimarket.gov.np/api/daily-prices/en"
 
 _cached_data = None
@@ -177,46 +179,8 @@ def get_all_live_prices() -> List[Dict]:
 
 def get_live_vegetables_list() -> List[Dict]:
     """
-    Get list of vegetables from live API with Nepali name mapping
+    Get list of vegetables from live API; Nepali labels come from processed CSV via predict_service.
     """
-    nepali_names = {
-        'tomato': 'Golbheda',
-        'potato': 'Aalu',
-        'onion': 'Pyaaj',
-        'carrot': 'Gajar',
-        'cabbage': 'Banda',
-        'cauliflower': 'Kauli',
-        'cauli': 'Kauli',
-        'radish': 'Mula',
-        'raddish': 'Mula',
-        'brinjal': 'Bhanta',
-        'eggplant': 'Bhanta',
-        'spinach': 'Palungo',
-        'cucumber': 'Kakro',
-        'bitter gourd': 'Tite Karela',
-        'bottle gourd': 'Lauka',
-        'pumpkin': 'Pharsi',
-        'beans': 'Simi',
-        'peas': 'Kerau',
-        'okra': 'Bhindi',
-        'ginger': 'Aduwa',
-        'garlic': 'Lasun',
-        'chilli': 'Khursani',
-        'capsicum': 'Bhede Khursani',
-        'mushroom': 'Chyau',
-        'coriander': 'Dhaniya',
-        'mint': 'Pudina',
-        'lettuce': 'Salad Patta',
-        'broccoli': 'Broccoli',
-        'asparagus': 'Kurilo',
-        'sweet potato': 'Sakharkhand',
-        'yam': 'Tarul',
-        'bamboo shoot': 'Tama',
-        'drumstick': 'Sahijan',
-        'fenugreek': 'Methi',
-        'mustard': 'Rayo',
-    }
-    
     data = fetch_live_prices()
     
     if not data or 'prices' not in data:
@@ -227,17 +191,7 @@ def get_live_vegetables_list() -> List[Dict]:
     
     for item in data['prices']:
         name = item['commodityname']
-        name_lower = name.lower()
-        
-        nepali = None
-        for key, value in nepali_names.items():
-            if key in name_lower:
-                nepali = value
-                break
-        
-        if nepali is None:
-            nepali = name.split('(')[0].strip()
-        
+        nepali = get_vegetable_nepali_label(name)
         base_name = name.split('(')[0].strip().lower()
         if base_name not in seen:
             seen.add(base_name)

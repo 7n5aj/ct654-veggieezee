@@ -5,7 +5,8 @@ openpyxl==3.1.5
 requests==2.32.5
 joblib==1.5.3
 xgboost==3.2.0
-scikit-learn==1.8.0
+# Pin to match nepal_veg_label_encoder.pkl / model pickling (avoids InconsistentVersionWarning and wrong encodings).
+scikit-learn==1.6.1
 cloudscraper>=1.2.71
 selenium>=4.0.0
 webdriver-manager>=4.0.0

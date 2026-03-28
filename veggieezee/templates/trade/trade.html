@@ -429,8 +429,9 @@
         <section class="quick-predict-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h3 style="margin: 0;">🔮 Quick Price Prediction</h3>
-                <div style="padding: 0.4rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
-                    🧠 XGBoost Model
+                <div style="padding: 0.4rem 1rem; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.85rem; font-weight: 600; text-align: right;">
+                    <div>🧠 XGBoost Model</div>
+                    <div style="font-size: 0.72rem; font-weight: 500; opacity: 0.95; margin-top: 0.2rem;">{{ training_class_count }} training classes · {{ feature_count }} features</div>
                 </div>
             </div>
             <form class="quick-predict-form" action="{% url 'predictions' %}" method="POST">
@@ -525,6 +526,7 @@
         {% endif %}
     </main>
 
+    <script type="application/json" id="overview-data">{{ overview_json|safe }}</script>
     <script>
         // Set default date to 7 days from now
         const futureDate = new Date();
@@ -532,28 +534,30 @@
         document.getElementById('date').value = futureDate.toISOString().split('T')[0];
         document.getElementById('date').setAttribute('min', new Date().toISOString().split('T')[0]);
 
-        // Calculate stats from overview data
         {% if overview %}
-        const overviewData = {{ overview|safe }};
-        
+        const overviewData = JSON.parse(document.getElementById('overview-data').textContent || '[]');
+
         if (overviewData && overviewData.length > 0) {
-            const prices = overviewData.filter(v => v.price).map(v => v.price);
+            const prices = overviewData.filter(v => v.price != null).map(v => Number(v.price));
             const avgPrice = prices.length > 0 ? (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(0) : '--';
             document.getElementById('avgPrice').textContent = 'Rs. ' + avgPrice;
-            
+
             const rising = overviewData.filter(v => v.trend === 'up').length;
             const falling = overviewData.filter(v => v.trend === 'down').length;
             document.getElementById('risingCount').textContent = rising;
             document.getElementById('fallingCount').textContent = falling;
         }
 
-        // Draw mini charts
-        function drawMiniChart(canvasId, isPositive) {
+        function drawMiniChart(canvasId, series, trend) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
 
+            let data = (series || []).map(Number).filter((x) => !Number.isNaN(x));
+            if (data.length < 2) return;
+
             const ctx = canvas.getContext('2d');
             const rect = canvas.getBoundingClientRect();
+            if (rect.width < 4 || rect.height < 4) return;
 
             const dpr = window.devicePixelRatio || 1;
             canvas.width = rect.width * dpr;
@@ -562,49 +566,37 @@
 
             const width = rect.width;
             const height = rect.height;
-            const padding = 5;
-
-            // Generate random data for demo
-            const data = [];
-            let base = 50 + Math.random() * 50;
-            for (let i = 0; i < 14; i++) {
-                base += (Math.random() - 0.5) * 10;
-                data.push(Math.max(10, base));
-            }
-
+            const pad = 4;
             const min = Math.min(...data);
             const max = Math.max(...data);
             const range = max - min || 1;
 
             const points = data.map((value, i) => ({
-                x: padding + (i / (data.length - 1)) * (width - padding * 2),
-                y: height - padding - ((value - min) / range) * (height - padding * 2)
+                x: pad + (i / (data.length - 1)) * (width - pad * 2),
+                y: height - pad - ((value - min) / range) * (height - pad * 2),
             }));
 
-            const lineColor = isPositive ? '#ef4444' : '#10b981';
-            const fillColor1 = isPositive ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
-            const fillColor2 = isPositive ? 'rgba(239, 68, 68, 0.05)' : 'rgba(16, 185, 129, 0.05)';
+            const lineColor = trend === 'up' ? '#10b981' : trend === 'down' ? '#ef4444' : '#64748b';
+            const fill1 = trend === 'up' ? 'rgba(16, 185, 129, 0.18)' : trend === 'down' ? 'rgba(239, 68, 68, 0.18)' : 'rgba(100, 116, 139, 0.15)';
+            const fill2 = trend === 'up' ? 'rgba(16, 185, 129,             0.02)' : trend === 'down' ? 'rgba(239, 68, 68, 0.02)' : 'rgba(100, 116, 139, 0.02)';
 
             const gradient = ctx.createLinearGradient(0, 0, 0, height);
-            gradient.addColorStop(0, fillColor1);
-            gradient.addColorStop(1, fillColor2);
+            gradient.addColorStop(0, fill1);
+            gradient.addColorStop(1, fill2);
 
+            ctx.clearRect(0, 0, width, height);
             ctx.beginPath();
-            ctx.moveTo(points[0].x, height - padding);
+            ctx.moveTo(points[0].x, height - pad);
             ctx.lineTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
-            ctx.lineTo(points[points.length - 1].x, height - padding);
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+            ctx.lineTo(points[points.length - 1].x, height - pad);
             ctx.closePath();
             ctx.fillStyle = gradient;
             ctx.fill();
 
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
+            for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
             ctx.strokeStyle = lineColor;
             ctx.lineWidth = 2;
             ctx.lineJoin = 'round';
@@ -612,10 +604,20 @@
             ctx.stroke();
         }
 
-        // Initialize charts
-        overviewData.forEach((veg, index) => {
-            drawMiniChart(`chart-${index + 1}`, veg.trend === 'up');
-        });
+        function paintAllMiniCharts() {
+            if (!overviewData || !overviewData.length) return;
+            overviewData.forEach((veg, index) => {
+                let s = veg.sparkline_prices;
+                const p = Number(veg.price);
+                if (!s || s.length < 2) {
+                    s = Number.isFinite(p) ? [p, p] : null;
+                }
+                if (s && s.length >= 2) drawMiniChart(`chart-${index + 1}`, s, veg.trend || 'stable');
+            });
+        }
+
+        requestAnimationFrame(() => requestAnimationFrame(paintAllMiniCharts));
+        window.addEventListener('resize', paintAllMiniCharts);
         {% endif %}
     </script>
 </body>

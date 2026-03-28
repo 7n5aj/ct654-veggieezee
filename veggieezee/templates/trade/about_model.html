@@ -327,7 +327,7 @@
     <main class="main-content">
         <div class="hero-section">
             <h1>🧠 XGBoost Machine Learning Model</h1>
-            <p>Our prediction system uses gradient boosting machine learning trained on historical Kalimati market data to forecast vegetable prices with high accuracy.</p>
+            <p>Our prediction system uses gradient boosting trained on historical Kalimati data: a single regressor shared across {{ training_class_count }} commodity label classes, with {{ feature_count }} engineered features per forecast.</p>
         </div>
 
         <div class="info-grid">
@@ -336,23 +336,25 @@
                 <p>The system employs XGBoost (Extreme Gradient Boosting), a powerful ensemble learning method that combines multiple decision trees for robust predictions.</p>
                 <ul>
                     <li>Algorithm: XGBoost Regressor</li>
-                    <li>Input Features: 62 engineered features</li>
+                    <li>Input features: {{ feature_count }} engineered columns per prediction</li>
+                    <li>Commodity taxonomy: {{ training_class_count }} label-encoder classes (training)</li>
                     <li>Output: Log-transformed NPR price</li>
                     <li>Training Data: Historical Kalimati market prices</li>
                     <li>Fallback: Rule-based model for robustness</li>
+                    <li>Predictions UI lists all {{ training_class_count }} classes: live Kalimati names plus archive-only rows when a crop is not on today's API (lags from CSV/DB).</li>
                 </ul>
             </div>
 
             <div class="info-card">
                 <h3>📊 Feature Engineering</h3>
-                <p>The model analyzes 62 carefully engineered features to capture complex patterns in vegetable pricing:</p>
+                <p>The model analyzes {{ feature_count }} engineered features to capture patterns in vegetable pricing:</p>
                 <ul>
                     <li>30-day historical price lags (lag_1 to lag_30)</li>
                     <li>Calendar features (day, month, year, day of week)</li>
                     <li>Seasonal indicators (season encoding)</li>
                     <li>Festival impact factors (major Nepali festivals)</li>
                     <li>Weekly and monthly cycles</li>
-                    <li>Vegetable type encoding (label encoded names)</li>
+                    <li>Vegetable type encoding ({{ training_class_count }} training class names)</li>
                 </ul>
             </div>
         </div>
@@ -389,16 +391,16 @@
 
             <div class="stats-highlight">
                 <div class="stat-box">
-                    <div class="number">62</div>
-                    <div class="label">Features</div>
+                    <div class="number">{{ feature_count }}</div>
+                    <div class="label">Input features</div>
                 </div>
                 <div class="stat-box">
                     <div class="number">30</div>
                     <div class="label">Lag Days</div>
                 </div>
                 <div class="stat-box">
-                    <div class="number">17+</div>
-                    <div class="label">Vegetables</div>
+                    <div class="number">{{ training_class_count }}</div>
+                    <div class="label">Training classes</div>
                 </div>
                 <div class="stat-box">
                     <div class="number">15+</div>

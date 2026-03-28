@@ -159,6 +159,25 @@
             font-size: 0.85rem;
             font-weight: 500;
             margin-top: 0.25rem;
+            line-height: 1.45;
+        }
+
+        .predictable-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.35rem;
+            line-height: 1.4;
+        }
+
+        .forecast-note {
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.88rem;
+            color: #166534;
+            line-height: 1.45;
         }
 
         .model-badge {
@@ -341,13 +360,20 @@
 
         .chart-section h4 {
             font-size: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.35rem;
             color: #333;
+        }
+
+        .chart-caption {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin: 0 0 0.75rem 0;
+            line-height: 1.4;
         }
 
         .chart-canvas {
             width: 100%;
-            height: 250px;
+            height: 270px;
             background: #f9fafb;
             border-radius: 8px;
         }
@@ -366,7 +392,7 @@
 
         .factors-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 0.75rem;
         }
 
@@ -537,7 +563,7 @@
     <main class="main-content">
         <div class="page-title">
             <h2>🔮 Price Predictions</h2>
-            <p>Forecast vegetable prices using XGBoost machine learning model trained on Kalimati market data</p>
+            <p>Forecast with XGBoost on {{ training_class_count }} trained commodity classes: choose live Kalimati items or archive-only classes when they are not on today's API.</p>
         </div>
 
         <div class="content-grid">
@@ -549,7 +575,12 @@
                         <span class="icon">🧠</span>
                         <span>XGBoost ML Model</span>
                     </div>
-                    <p class="predictable-info">{{ predictable_count }} vegetables available for prediction</p>
+                    <p class="predictable-info">
+                        <strong>{{ predictable_count }}</strong> total forecast choices:
+                        <strong>{{ predictable_live_count }}</strong> on today's Kalimati snapshot,
+                        <strong>{{ predictable_model_only_count }}</strong> trained classes only in archive (still predictable).
+                    </p>
+                    <p class="predictable-sub">Archive-only rows use historical CSV and database lags when the commodity is missing from the latest API list.</p>
                 </div>
 
                 <form method="POST" id="predictionForm">
@@ -558,11 +589,20 @@
                         <label for="vegetable">Vegetable</label>
                         <select name="vegetable" id="vegetable" required>
                             <option value="">Select a vegetable...</option>
-                            {% for veg in vegetables %}
-                            <option value="{{ veg.vegetable }}" {% if result and result.vegetable == veg.vegetable %}selected{% endif %}>
-                                {{ veg.vegetable }} ({{ veg.training_name }})
+                            <optgroup label="Today's Kalimati list ({{ predictable_live_count }})">
+                            {% for veg in vegetables_live %}
+                            <option value="{{ veg.choice_value }}" title="{{ veg.option_hint }}" {% if result and result.vegetable == veg.choice_value %}selected{% endif %}>
+                                {{ veg.vegetable }} → {{ veg.training_name }}
                             </option>
                             {% endfor %}
+                            </optgroup>
+                            <optgroup label="Archive-only trained classes ({{ predictable_model_only_count }})">
+                            {% for veg in vegetables_model_only %}
+                            <option value="{{ veg.choice_value }}" title="{{ veg.option_hint }}" {% if result and result.vegetable == veg.choice_value %}selected{% endif %}>
+                                {{ veg.display_title }} ({{ veg.training_name }}) — historical series
+                            </option>
+                            {% endfor %}
+                            </optgroup>
                         </select>
                     </div>
                     
@@ -594,6 +634,9 @@
                         <div class="price-range">
                             Expected range: Rs. {{ result.price_min }} - Rs. {{ result.price_max }}
                         </div>
+                        {% if result.forecast_note %}
+                        <p class="forecast-note">{{ result.forecast_note }}</p>
+                        {% endif %}
                     </div>
 
                     <div class="prediction-details">
@@ -618,7 +661,8 @@
                     </div>
 
                     <div class="chart-section">
-                        <h4>Historical Price Trend</h4>
+                        <h4>Past 7 days</h4>
+                        <p class="chart-caption">Recent daily prices from your data; the orange point is your forecast date (not on the same time scale).</p>
                         <canvas id="priceChart" class="chart-canvas"></canvas>
                     </div>
 
@@ -630,8 +674,12 @@
                                 <div class="value">30 Days</div>
                             </div>
                             <div class="factor-item">
-                                <div class="name">Feature Count</div>
-                                <div class="value">62 Features</div>
+                                <div class="name">Input features</div>
+                                <div class="value">{{ feature_count }} features</div>
+                            </div>
+                            <div class="factor-item">
+                                <div class="name">Training classes</div>
+                                <div class="value">{{ training_class_count }} commodities</div>
                             </div>
                             <div class="factor-item">
                                 <div class="name">Model Type</div>
@@ -641,7 +689,7 @@
                         
                         <div class="model-info">
                             <h5>How the Model Works</h5>
-                            <p>This prediction uses a gradient boosting machine learning model trained on historical Kalimati market data. The model analyzes 62 features including:</p>
+                            <p>This prediction uses gradient boosting on historical Kalimati data. Each forecast uses {{ feature_count }} engineered inputs (lags, calendar, festivals, seasonality, and vegetable encoding across {{ training_class_count }} training commodity classes):</p>
                             <div class="model-features">
                                 <span class="model-feature-tag">30-day price lags</span>
                                 <span class="model-feature-tag">Calendar features (day, month, year)</span>
@@ -673,9 +721,9 @@
             <h3>Quick Predictions - Popular Vegetables</h3>
             <div class="quick-grid">
                 {% for veg in vegetables|slice:":8" %}
-                <div class="quick-card" onclick="quickPredict('{{ veg.vegetable }}')">
-                    <div class="veg-name">{{ veg.vegetable }}</div>
-                    <div class="veg-local">Model: {{ veg.training_name }}</div>
+                <div class="quick-card" onclick="quickPredict('{{ veg.choice_value|escapejs }}')">
+                    <div class="veg-name">{% if veg.source == 'live' %}{{ veg.vegetable }}{% else %}{{ veg.display_title }}{% endif %}</div>
+                    <div class="veg-local">Model: {{ veg.training_name }}{% if veg.source == 'model_only' %} (archive){% endif %}</div>
                     <div class="current-price">Click to predict</div>
                 </div>
                 {% endfor %}
@@ -707,8 +755,8 @@
             const canvas = document.getElementById('priceChart');
             const ctx = canvas.getContext('2d');
             
-            // Fetch historical data
-            const response = await fetch(`/api/historical/?vegetable={{ result.vegetable|lower }}&days=30`);
+            const HIST_DAYS = 7;
+            const response = await fetch(`/api/historical/?vegetable={{ result.vegetable|lower }}&days=${HIST_DAYS}`);
             const data = await response.json();
             
             if (!data.success || !data.prices || data.prices.length === 0) {
@@ -719,41 +767,88 @@
                 return;
             }
 
-            // Set canvas size
             canvas.width = canvas.offsetWidth;
-            canvas.height = 250;
+            canvas.height = 270;
 
             const width = canvas.width;
             const height = canvas.height;
             const padding = 50;
+            const bottomLabelSpace = 42;
             const chartWidth = width - padding * 2;
-            const chartHeight = height - padding * 2;
+            const chartHeight = height - padding * 2 - bottomLabelSpace;
 
-            // Clear canvas
             ctx.clearRect(0, 0, width, height);
 
             const prices = data.prices;
+            const dateSeries = Array.isArray(data.dates) ? data.dates : [];
             const predictedPrice = {{ result.predicted_price }};
-            
-            // Add predicted price to the end
-            const allPrices = [...prices, predictedPrice];
+            const predictionDateStr = '{{ result.date|escapejs }}';
 
-            // Find min and max
+            const allPrices = [...prices, predictedPrice];
             const minPrice = Math.min(...allPrices) * 0.9;
             const maxPrice = Math.max(...allPrices) * 1.1;
 
-            // Draw grid
+            const histShare = 0.72;
+            const histRight = padding + chartWidth * histShare;
+            const predX = padding + chartWidth * 0.94;
+
+            function xForHistorical(i) {
+                const n = prices.length;
+                if (n <= 1) return padding + (histRight - padding) / 2;
+                return padding + ((histRight - padding) * i) / (n - 1);
+            }
+
+            function formatAxisDate(isoOrStr) {
+                if (!isoOrStr) return '';
+                const s = String(isoOrStr).slice(0, 10);
+                const d = new Date(s + 'T12:00:00');
+                if (Number.isNaN(d.getTime())) return s;
+                return d.toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+
+            function pickHistoricalTickIndices(n) {
+                if (n <= 0) return [];
+                if (n === 1) return [0];
+                if (n <= 7) {
+                    const idx = new Set([0, n - 1]);
+                    if (n >= 4) idx.add(Math.floor(n / 2));
+                    if (n === 6 || n === 7) idx.add(Math.floor(n / 3));
+                    return Array.from(idx).sort((a, b) => a - b);
+                }
+                const idx = new Set([0, n - 1, Math.floor(n / 2)]);
+                return Array.from(idx).sort((a, b) => a - b);
+            }
+
+            const chartBottom = padding + chartHeight;
+            const xAxisYHist = height - 28;
+            const xAxisYPred = height - 10;
+
+            // Chart area divider (history vs forecast zone)
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(histRight, padding);
+            ctx.lineTo(histRight, chartBottom);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('forecast', (histRight + predX) / 2, padding + 12);
+            ctx.textAlign = 'left';
+
             ctx.strokeStyle = '#e5e5e5';
             ctx.lineWidth = 1;
-
             for (let i = 0; i <= 5; i++) {
                 const y = padding + (chartHeight / 5) * i;
                 ctx.beginPath();
                 ctx.moveTo(padding, y);
                 ctx.lineTo(width - padding, y);
                 ctx.stroke();
-
-                // Y-axis labels
                 ctx.fillStyle = '#999';
                 ctx.font = '12px sans-serif';
                 ctx.textAlign = 'right';
@@ -761,43 +856,74 @@
                 ctx.fillText(`Rs. ${Math.round(price)}`, padding - 10, y + 4);
             }
 
-            // Draw historical line
+            ctx.strokeStyle = '#d1d5db';
+            ctx.beginPath();
+            ctx.moveTo(padding, chartBottom);
+            ctx.lineTo(width - padding, chartBottom);
+            ctx.stroke();
+
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 2;
             ctx.beginPath();
-
             prices.forEach((price, i) => {
-                const x = padding + (chartWidth / prices.length) * i;
+                const x = xForHistorical(i);
                 const y = padding + chartHeight - ((price - minPrice) / (maxPrice - minPrice)) * chartHeight;
-
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
             });
             ctx.stroke();
 
-            // Draw prediction point
-            const predX = padding + chartWidth;
             const predY = padding + chartHeight - ((predictedPrice - minPrice) / (maxPrice - minPrice)) * chartHeight;
 
-            // Dashed line to prediction
             ctx.setLineDash([5, 5]);
             ctx.strokeStyle = '#f59e0b';
             ctx.beginPath();
-            const lastX = padding + (chartWidth / prices.length) * (prices.length - 1);
+            const lastX = xForHistorical(prices.length - 1);
             const lastY = padding + chartHeight - ((prices[prices.length - 1] - minPrice) / (maxPrice - minPrice)) * chartHeight;
             ctx.moveTo(lastX, lastY);
             ctx.lineTo(predX, predY);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Prediction point
             ctx.fillStyle = '#f59e0b';
             ctx.beginPath();
             ctx.arc(predX, predY, 8, 0, Math.PI * 2);
             ctx.fill();
+
+            ctx.font = '11px system-ui, -apple-system, sans-serif';
+            const histTicks = pickHistoricalTickIndices(prices.length);
+            const drawnX = [];
+            const minTickGap = 50;
+            for (const i of histTicks) {
+                const x = xForHistorical(i);
+                const label = formatAxisDate(dateSeries[i]);
+                if (!label) continue;
+                if (drawnX.some((dx) => Math.abs(x - dx) < minTickGap)) continue;
+                drawnX.push(x);
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, chartBottom);
+                ctx.lineTo(x, chartBottom + 4);
+                ctx.stroke();
+                ctx.fillStyle = '#555';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, x, xAxisYHist);
+            }
+
+            ctx.strokeStyle = '#d97706';
+            ctx.beginPath();
+            ctx.moveTo(predX, chartBottom);
+            ctx.lineTo(predX, chartBottom + 4);
+            ctx.stroke();
+            ctx.fillStyle = '#92400e';
+            ctx.font = '10px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            const predLabel = formatAxisDate(predictionDateStr) + ' (pred.)';
+            ctx.fillText(predLabel, predX, xAxisYPred);
+
+            ctx.textAlign = 'left';
+            ctx.font = '12px sans-serif';
 
             // Legend
             ctx.fillStyle = '#10b981';

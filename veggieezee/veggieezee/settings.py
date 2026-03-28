@@ -118,11 +118,24 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kathmandu'
 
 USE_I18N = True
 
 USE_TZ = True
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'veggieezee',
+    }
+}
+
+# Kalimati → DB: skip API when at least this many commodities exist for local today.
+PRICES_SYNC_MIN_ROW_SKIP = 20
+
+# Short cache for vegetable list built from DB (reduces repeated heavy work per request).
+PRICES_VEG_LIST_CACHE_TTL = 45
 
 
 # Static files (CSS, JavaScript, Images)
