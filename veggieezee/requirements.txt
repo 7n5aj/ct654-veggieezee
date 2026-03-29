@@ -1,12 +1,12 @@
-Django==6.0.3
-pandas==2.3.3
-numpy==2.4.0
-openpyxl==3.1.5
-requests==2.32.5
-joblib==1.5.3
-xgboost==3.2.0
-# Pin to match nepal_veg_label_encoder.pkl / model pickling (avoids InconsistentVersionWarning and wrong encodings).
-scikit-learn==1.6.1
-cloudscraper>=1.2.71
-selenium>=4.0.0
-webdriver-manager>=4.0.0
+
+Django>=4.2,<5.0
+pandas>=1.5,<2.1
+numpy>=1.23,<1.27
+openpyxl>=3.0,<3.2
+requests>=2.28,<3.0
+joblib>=1.2,<2.0
+xgboost>=1.7,<2.1
+scikit-learn>=1.2,<1.4
+cloudscraper>=1.2,<2.0
+selenium>=4.8,<5.0
+webdriver-manager>=3.8,<5.0
