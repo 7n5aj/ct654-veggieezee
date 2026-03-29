@@ -69,6 +69,7 @@ class AutoSyncMiddleware:
         try:
             from django.conf import settings
             from django.core.cache import cache
+            from prices.models import VegetablePrice
             from prices.snapshot import should_skip_api_fetch
 
             min_rows = getattr(settings, 'PRICES_SYNC_MIN_ROW_SKIP', 20)
