@@ -348,22 +348,20 @@ def loginpage(request):
         email = request.POST.get('email')
         password = request.POST.get('password')
         
-        # Find user by email
         user = User.objects.filter(email=email).first()
         if user is None:
-            return HttpResponse("No account found with this email address.")
-        # Authenticate user
-        user = authenticate(request, email=email, password=password)
+            messages.error(request, "No account found with this email address.")
+            return redirect('login')
+
+        user = authenticate(request, username=user.username, password=password)
         
         if user is not None:
-            # Login the user
             login(request, user)
-            
-            # Store session data
             request.session['email'] = email
-            
-        else:
             return redirect('trade')
+        else:
+            messages.error(request, "Incorrect password.")
+            return redirect('login')
     
     return render(request, 'website/login.html', {'form': UserRegistrationForm})
 # ORIGINAL CODE

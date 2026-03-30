@@ -206,6 +206,16 @@
             <h1>Login</h1>
             <p>Sign in to access your dashboard</p>
 
+            {% if messages %}
+            {% for message in messages %}
+            <div style="padding:10px 15px;margin-bottom:15px;border-radius:8px;font-size:14px;
+                {% if message.tags == 'error' %}background:#fef2f2;color:#dc2626;border:1px solid #fecaca;
+                {% else %}background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
             <form method="POST" action="{% url 'login' %}">
                 {% csrf_token %}
 
