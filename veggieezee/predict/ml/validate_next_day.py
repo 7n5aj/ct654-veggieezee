@@ -238,6 +238,33 @@ def run_validation() -> pd.DataFrame:
     return results
 
 
+def _setup_nepali_plot_font():
+    """Use a Devanagari-capable font (Colab/Linux often lack Nirmala/Mangal)."""
+    import warnings
+    from matplotlib import font_manager
+    import matplotlib.pyplot as plt
+
+    plt.rcParams['axes.unicode_minus'] = False
+    font_path = ML_DIR / 'NotoSansDevanagari-Regular.ttf'
+    if not font_path.is_file():
+        try:
+            import urllib.request
+
+            url = (
+                'https://raw.githubusercontent.com/googlefonts/noto-fonts/main/'
+                'hinted/ttf/NotoSansDevanagari/NotoSansDevanagari-Regular.ttf'
+            )
+            urllib.request.urlretrieve(url, font_path)
+        except Exception as exc:
+            warnings.warn(f'Could not download Nepali font ({exc}); legend may show boxes.')
+
+    if font_path.is_file():
+        font_manager.fontManager.addfont(str(font_path))
+        plt.rcParams['font.family'] = 'Noto Sans Devanagari'
+    else:
+        plt.rcParams['font.family'] = ['Nirmala UI', 'Mangal', 'DejaVu Sans']
+
+
 def _plot_results(results: pd.DataFrame) -> None:
     try:
         import matplotlib.pyplot as plt
@@ -245,14 +272,18 @@ def _plot_results(results: pd.DataFrame) -> None:
         print('Install matplotlib to generate chart: pip install matplotlib')
         return
 
-    # Devanagari font only for Nepali vegetable names in chart legends.
-    plt.rcParams['font.family'] = ['Nirmala UI', 'Mangal', 'DejaVu Sans']
-    plt.rcParams['axes.unicode_minus'] = False
+    import warnings
+
+    warnings.filterwarnings('ignore', message='.*categorical units.*', category=UserWarning)
+
+    _setup_nepali_plot_font()
 
     name_col = 'nepali_name' if 'nepali_name' in results.columns else 'commodity'
+    plot_df = results.copy()
+    plot_df['predict_date'] = pd.to_datetime(plot_df['predict_date'])
 
     daily = (
-        results.groupby('predict_date')[['predicted_npr', 'actual_npr']]
+        plot_df.groupby('predict_date')[['predicted_npr', 'actual_npr']]
         .mean()
         .reset_index()
         .sort_values('predict_date')
@@ -276,7 +307,7 @@ def _plot_results(results: pd.DataFrame) -> None:
         .index.tolist()
     )
     for nepali_name in top_vegs:
-        sub = results[results[name_col] == nepali_name].sort_values('predict_date')
+        sub = plot_df[plot_df[name_col] == nepali_name].sort_values('predict_date')
         axes[1].plot(sub['predict_date'], sub['actual_npr'], 'o-', label=f'{nepali_name} actual')
         axes[1].plot(sub['predict_date'], sub['predicted_npr'], 's--', label=f'{nepali_name} pred')
 
