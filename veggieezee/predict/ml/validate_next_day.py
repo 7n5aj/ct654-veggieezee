@@ -40,6 +40,7 @@ DATA_PATH = ML_DIR / 'kalimati_vegetable_prices_last_30_days.csv'
 NEPALI_MAP_PATH = ML_DIR / 'kalimati_nepali_to_english.csv'
 RESULTS_CSV = ML_DIR / 'validation_next_day_results.csv'
 CHART_PATH = ML_DIR / 'validation_predicted_vs_actual.png'
+ERRORS_CHART_PATH = ML_DIR / 'validation_error_analysis.png'
 TRAIN_DAYS = 15
 
 
@@ -323,6 +324,69 @@ def _plot_results(results: pd.DataFrame) -> None:
     print(f'Saved: {CHART_PATH}')
 
 
+def _plot_errors(results: pd.DataFrame) -> None:
+    """Error analysis charts for the report."""
+    try:
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print('Install matplotlib to generate error charts: pip install matplotlib')
+        return
+
+    import warnings
+
+    warnings.filterwarnings('ignore', message='.*categorical units.*', category=UserWarning)
+    _setup_nepali_plot_font()
+
+    df = results.copy()
+    if 'predict_date' in df.columns:
+        df['predict_date'] = pd.to_datetime(df['predict_date'])
+
+    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
+
+    axes[0, 0].hist(df['abs_error_npr'], bins=40, color='#5c6bc0', edgecolor='white')
+    axes[0, 0].set_title('Distribution of absolute error (NPR)')
+    axes[0, 0].set_xlabel('Absolute error (NPR)')
+    axes[0, 0].set_ylabel('Count')
+
+    axes[0, 1].hist(df['pct_error'].dropna(), bins=40, color='#ef5350', edgecolor='white')
+    axes[0, 1].set_title('Distribution of percentage error (%)')
+    axes[0, 1].set_xlabel('MAPE per forecast (%)')
+    axes[0, 1].set_ylabel('Count')
+
+    daily_err = df.groupby('predict_date')['abs_error_npr'].mean().reset_index()
+    axes[1, 0].plot(daily_err['predict_date'], daily_err['abs_error_npr'], 'o-', color='#8e24aa')
+    axes[1, 0].set_title('Average absolute error by day')
+    axes[1, 0].set_xlabel('Date')
+    axes[1, 0].set_ylabel('Mean abs error (NPR)')
+    axes[1, 0].tick_params(axis='x', rotation=45)
+
+    axes[1, 1].scatter(df['actual_npr'], df['predicted_npr'], alpha=0.35, s=18, color='#00897b')
+    lim_min = min(df['actual_npr'].min(), df['predicted_npr'].min())
+    lim_max = max(df['actual_npr'].max(), df['predicted_npr'].max())
+    axes[1, 1].plot([lim_min, lim_max], [lim_min, lim_max], 'k--', linewidth=1, label='Perfect fit')
+    axes[1, 1].set_title('Predicted vs actual (all points)')
+    axes[1, 1].set_xlabel('Actual price (NPR)')
+    axes[1, 1].set_ylabel('Predicted price (NPR)')
+    axes[1, 1].legend()
+
+    plt.tight_layout()
+    plt.savefig(ERRORS_CHART_PATH, dpi=120)
+    plt.close()
+    print(f'Saved: {ERRORS_CHART_PATH}')
+
+
+def plot_validation_charts(results: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Run validation (if needed) and save both chart PNGs."""
+    if results is None:
+        if RESULTS_CSV.is_file():
+            results = pd.read_csv(RESULTS_CSV, encoding='utf-8-sig')
+        else:
+            results = run_validation()
+    _plot_results(results)
+    _plot_errors(results)
+    return results
+
+
 if __name__ == '__main__':
     out = run_validation()
-    _plot_results(out)
+    plot_validation_charts(out)
