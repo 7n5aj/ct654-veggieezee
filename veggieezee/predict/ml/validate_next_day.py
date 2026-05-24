@@ -313,6 +313,8 @@ def _plot_results(results: pd.DataFrame) -> None:
     axes[0].legend()
     axes[0].tick_params(axis='x', rotation=45)
 
+    from matplotlib.lines import Line2D
+
     top_vegs = (
         results.groupby(name_col)['abs_error_npr']
         .count()
@@ -320,23 +322,66 @@ def _plot_results(results: pd.DataFrame) -> None:
         .head(3)
         .index.tolist()
     )
-    for nepali_name in top_vegs:
+    veg_colors = ['#1f77b4', '#2ca02c', '#9467bd']
+    for i, nepali_name in enumerate(top_vegs):
+        color = veg_colors[i % len(veg_colors)]
         sub = plot_df[plot_df[name_col] == nepali_name].sort_values('predict_date')
-        axes[1].plot(sub['predict_date'], sub['actual_npr'], 'o-', label=nepali_name)
-        axes[1].plot(sub['predict_date'], sub['predicted_npr'], 's--', label='_nolegend_')
+        axes[1].plot(
+            sub['predict_date'],
+            sub['actual_npr'],
+            'o-',
+            color=color,
+            label=nepali_name,
+            linewidth=2,
+            markersize=5,
+        )
+        axes[1].plot(
+            sub['predict_date'],
+            sub['predicted_npr'],
+            's--',
+            color=color,
+            label='_nolegend_',
+            linewidth=2,
+            markersize=5,
+        )
 
     axes[1].set_title('Sample vegetables: predicted vs actual')
     axes[1].set_xlabel('Date')
     axes[1].set_ylabel('Price (NPR)')
-    leg = axes[1].legend(fontsize=8, title='Vegetable (Nepali)')
-    _apply_nepali_legend(leg, nepali_font)
-    axes[1].tick_params(axis='x', rotation=45)
 
-    fig = axes[1].figure
-    fig.text(
-        0.99, 0.02, 'Solid = actual   |   Dashed = predicted',
-        ha='right', va='bottom', fontsize=8, color='#555',
+    veg_leg = axes[1].legend(
+        fontsize=8,
+        title='Vegetable (Nepali)',
+        loc='upper left',
     )
+    _apply_nepali_legend(veg_leg, nepali_font)
+
+    style_handles = [
+        Line2D(
+            [0],
+            [0],
+            color='#555',
+            linestyle='-',
+            marker='o',
+            label='Actual',
+            linewidth=2,
+            markersize=5,
+        ),
+        Line2D(
+            [0],
+            [0],
+            color='#555',
+            linestyle='--',
+            marker='s',
+            label='Predicted',
+            linewidth=2,
+            markersize=5,
+        ),
+    ]
+    style_leg = axes[1].legend(handles=style_handles, loc='upper right', fontsize=8)
+    axes[1].add_artist(veg_leg)
+
+    axes[1].tick_params(axis='x', rotation=45)
 
     plt.tight_layout()
     plt.savefig(CHART_PATH, dpi=120)
