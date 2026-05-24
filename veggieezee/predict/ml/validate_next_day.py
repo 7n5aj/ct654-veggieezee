@@ -239,13 +239,19 @@ def run_validation() -> pd.DataFrame:
     return results
 
 
-def _setup_nepali_plot_font():
-    """Use a Devanagari-capable font (Colab/Linux often lack Nirmala/Mangal)."""
+def _prepare_plot_fonts():
+    """
+    English labels use DejaVu Sans; Nepali vegetable names use Noto Devanagari in legends only.
+    (Setting Noto globally breaks English titles — it has no Latin glyphs.)
+    """
     import warnings
     from matplotlib import font_manager
+    from matplotlib.font_manager import FontProperties
     import matplotlib.pyplot as plt
 
+    plt.rcParams['font.family'] = 'DejaVu Sans'
     plt.rcParams['axes.unicode_minus'] = False
+
     font_path = ML_DIR / 'NotoSansDevanagari-Regular.ttf'
     if not font_path.is_file():
         try:
@@ -261,9 +267,15 @@ def _setup_nepali_plot_font():
 
     if font_path.is_file():
         font_manager.fontManager.addfont(str(font_path))
-        plt.rcParams['font.family'] = 'Noto Sans Devanagari'
-    else:
-        plt.rcParams['font.family'] = ['Nirmala UI', 'Mangal', 'DejaVu Sans']
+        return FontProperties(fname=str(font_path))
+    return None
+
+
+def _apply_nepali_legend(legend, nepali_font) -> None:
+    if legend is None or nepali_font is None:
+        return
+    for text in legend.get_texts():
+        text.set_fontproperties(nepali_font)
 
 
 def _plot_results(results: pd.DataFrame) -> None:
@@ -276,8 +288,9 @@ def _plot_results(results: pd.DataFrame) -> None:
     import warnings
 
     warnings.filterwarnings('ignore', message='.*categorical units.*', category=UserWarning)
+    warnings.filterwarnings('ignore', message='.*Glyph.*missing from font.*', category=UserWarning)
 
-    _setup_nepali_plot_font()
+    nepali_font = _prepare_plot_fonts()
 
     name_col = 'nepali_name' if 'nepali_name' in results.columns else 'commodity'
     plot_df = results.copy()
@@ -309,14 +322,21 @@ def _plot_results(results: pd.DataFrame) -> None:
     )
     for nepali_name in top_vegs:
         sub = plot_df[plot_df[name_col] == nepali_name].sort_values('predict_date')
-        axes[1].plot(sub['predict_date'], sub['actual_npr'], 'o-', label=f'{nepali_name} actual')
-        axes[1].plot(sub['predict_date'], sub['predicted_npr'], 's--', label=f'{nepali_name} pred')
+        axes[1].plot(sub['predict_date'], sub['actual_npr'], 'o-', label=nepali_name)
+        axes[1].plot(sub['predict_date'], sub['predicted_npr'], 's--', label='_nolegend_')
 
     axes[1].set_title('Sample vegetables: predicted vs actual')
     axes[1].set_xlabel('Date')
     axes[1].set_ylabel('Price (NPR)')
-    axes[1].legend(fontsize=8)
+    leg = axes[1].legend(fontsize=8, title='Vegetable (Nepali)')
+    _apply_nepali_legend(leg, nepali_font)
     axes[1].tick_params(axis='x', rotation=45)
+
+    fig = axes[1].figure
+    fig.text(
+        0.99, 0.02, 'Solid = actual   |   Dashed = predicted',
+        ha='right', va='bottom', fontsize=8, color='#555',
+    )
 
     plt.tight_layout()
     plt.savefig(CHART_PATH, dpi=120)
@@ -335,7 +355,8 @@ def _plot_errors(results: pd.DataFrame) -> None:
     import warnings
 
     warnings.filterwarnings('ignore', message='.*categorical units.*', category=UserWarning)
-    _setup_nepali_plot_font()
+    warnings.filterwarnings('ignore', message='.*Glyph.*missing from font.*', category=UserWarning)
+    _prepare_plot_fonts()  # English-only chart
 
     df = results.copy()
     if 'predict_date' in df.columns:
