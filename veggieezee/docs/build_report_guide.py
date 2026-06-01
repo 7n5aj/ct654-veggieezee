@@ -119,16 +119,37 @@ def _build_training_importance_with_log() -> None:
     plt.close(fig)
 
 
-def img_tag(filename: str, caption: str) -> str:
+def img_tag(filename: str, caption: str, *alt_names: str) -> str:
     path = ASSETS / filename
+    for alt in alt_names:
+        if not path.is_file():
+            path = ASSETS / alt
+        if not path.is_file():
+            path = ML / alt
     if not path.is_file():
-        return f'<p class="muted">Missing: {html.escape(filename)} — run validate_next_day.py then build_report_guide.py</p>'
+        path = ML / filename
+    if not path.is_file():
+        return f'<p class="muted">Missing: {html.escape(filename)} — run validate_next_day.py, add log screenshots, then rebuild.</p>'
     b64 = base64.b64encode(path.read_bytes()).decode("ascii")
     return (
         f'<figure class="fig">'
         f'<img src="data:image/png;base64,{b64}" alt="{html.escape(caption)}" />'
         f'<figcaption><strong>{html.escape(caption)}</strong></figcaption>'
         f'</figure>'
+    )
+
+
+def _metrics_from_results() -> tuple[float, float, float]:
+    import numpy as np
+
+    p = ML / "validation_next_day_results.csv"
+    if not p.is_file():
+        return 8.37, 15.43, 7.64
+    r = __import__("pandas").read_csv(p, encoding="utf-8-sig")
+    return (
+        float(r["abs_error_npr"].mean()),
+        float(np.sqrt((r["error_npr"] ** 2).mean())),
+        float(r["pct_error"].mean()),
     )
 
 
@@ -141,9 +162,7 @@ def build_option_b_narrative(df) -> str:
 
     metrics_pairs = int(df["forecast_days"].sum())
     veg_count = len(df)
-    mae = 8.37  # from last run; could recompute from results csv if needed
-    rmse = 15.43
-    mape = 7.64
+    mae, rmse, mape = _metrics_from_results()
 
     top5 = df.head(5)
     best = top5.iloc[0]
@@ -214,7 +233,14 @@ PAGE = """<!DOCTYPE html>
     header h1 {{ margin:0 0 .5rem; font-size:1.55rem; }}
     section {{ background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:1rem; }}
     h2 {{ color:var(--accent); font-size:1.12rem; margin:0 0 .75rem; border-bottom:2px solid #e8f5e9; padding-bottom:.3rem; }}
+    h3 {{ font-size:1rem; margin:1rem 0 .4rem; color:#333; }}
     .muted {{ color:var(--muted); font-size:.92rem; }}
+    ul.check {{ padding-left:1.25rem; }}
+    ul.check li {{ margin:.35rem 0; }}
+    .done {{ color:#2e7d32; font-weight:600; }}
+    table.data {{ width:100%; border-collapse:collapse; font-size:.88rem; margin:.5rem 0; }}
+    table.data th, table.data td {{ border:1px solid var(--border); padding:.45rem .6rem; text-align:left; }}
+    table.data th {{ background:#e8f5e9; }}
     .note {{ background:#fff8e1; border-left:4px solid #f9a825; padding:.75rem 1rem; margin:.75rem 0; font-size:.93rem; }}
     .fig img {{ width:100%; height:auto; border:1px solid var(--border); border-radius:6px; }}
     .fig figcaption {{ margin-top:.5rem; font-size:.9rem; }}
@@ -231,12 +257,35 @@ PAGE = """<!DOCTYPE html>
 <body>
 <div class="wrap">
   <header>
-    <h1>Veggieezee report — paste guide</h1>
-    <p>Each image below is <strong>graph + console log in one screenshot-style figure</strong> (for Word). Use the table to mention <strong>every vegetable</strong> by name in the report.</p>
+    <h1>Veggieezee — Minor report insert guide</h1>
+    <p>Copy the grey boxes into <strong>MinorProjectFinalReport.docx</strong>. Figures show <strong>graph + real Colab log</strong> (after you run composite script). Everything below maps to teacher feedback.</p>
   </header>
 
   <section>
-    <h2>Real notebook log screenshots</h2>
+    <h2>Teacher feedback checklist</h2>
+    <ul class="check">
+      <li><span class="done">§3.2.0 + Table 3.2</span> — Dataset source and size</li>
+      <li><span class="done">Figure 3.9</span> — Feature importance visualization</li>
+      <li><span class="done">§3.8.4 + Figs 3.10a–d</span> — Real-world (next-day) validation</li>
+      <li><span class="done">§4.1.1</span> — Limitations (market shocks)</li>
+      <li><span class="done">Figs 3.10a–d, 3.11</span> — Prediction vs actual</li>
+      <li><span class="done">Ch 1 SCOPE + §4.2</span> — Region/vegetables + expansion</li>
+      <li><span class="done">§3.8.5 + Table 3.3</span> — Deployment feasibility</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>List of Figures — add these lines</h2>
+    <div class="copy">Figure 3.9: Top 30 feature importances of the XGBoost model (training notebook, Step 8)
+Figure 3.10a: Next-day validation overview (market average, accurate and higher-error examples) with validation log
+Figure 3.10b: Top five accurate vegetables — predicted vs actual with validation log
+Figure 3.10c: Accurate vs higher-error vegetable — predicted vs actual with validation log
+Figure 3.10d: All vegetables — mean MAPE ranking with full per-commodity log
+Figure 3.11: Validation error analysis with validation log</div>
+  </section>
+
+  <section>
+    <h2>Real notebook log screenshots (before final figures)</h2>
     <div class="note">
       <strong>Important:</strong> Logs must be real Colab/Jupyter screenshots, not grey fake text.
       See <code>docs/log_screenshots/README.md</code> → save PNGs → run
@@ -245,13 +294,38 @@ PAGE = """<!DOCTYPE html>
   </section>
 
   <section>
-    <h2>How sir / your friend wanted it</h2>
-    <ul>
-      <li>Don’t put graphs and logs in separate places — use these combined PNGs.</li>
-      <li>Show <strong>about 5 accurate</strong> vegetables (Figure 3.10b).</li>
-      <li>Also show <strong>one higher-error</strong> case next to an accurate one (Figure 3.10c).</li>
-      <li>For <strong>all vegetables</strong>: use Figure 3.10d + Table 3.x from the table below (one row per veg).</li>
-    </ul>
+    <h2>Chapter 1 — SCOPE (replace existing SCOPE paragraph)</h2>
+    <div class="copy">This project is scoped to short-term wholesale vegetable price forecasting for the Kalimati Fruits and Vegetable Market, Kathmandu, Nepal. Historical daily minimum, maximum, and average prices are collected from the Kalimati Market Development Board data source (official market records and daily price API/export). The deployed Veggieezee system predicts prices for vegetables that are present in the trained model taxonomy (approximately 90 vegetable classes after label encoding).
+
+The current study does not cover retail markets outside Kalimati, all districts of Nepal, or non-vegetable commodities. Validation on a recent 30-day Kalimati export is used to demonstrate next-day forecasting behaviour in an operational setting. Future expansion may include additional wholesale markets, a wider commodity list, longer historical windows, and automated periodic model retraining.</div>
+  </section>
+
+  <section>
+    <h2>§3.2.0 Dataset source and size</h2>
+    <p class="muted">Insert before §3.2.1 Data Cleaning. Replace any old “356,324 rows” sentence with the last line below.</p>
+    <h3>Heading</h3>
+    <div class="copy">3.2.0 Dataset Source and Size</div>
+    <h3>Body</h3>
+    <div class="copy">The primary dataset was obtained from the Kalimati Fruits and Vegetable Market Development Board, which publishes daily wholesale vegetable prices for Kathmandu. Each record contains the commodity name, date, unit, and minimum, maximum, and average price in Nepalese Rupees (NPR).
+
+The raw export contained 498,852 rows and 12 columns. After cleaning (removal of invalid rows, outlier filtering, lag construction, and dropping rows with undefined lag values), the modeling dataset contained 492,803 rows spanning 26 June 2013 to 29 June 2025. The target variable used for training is the average price, transformed with log1p during XGBoost training and converted back to NPR using expm1 at inference.
+
+For operational next-day validation, a separate 30-calendar-day Kalimati export was used. This file contained 2,319 daily price rows across multiple Nepali commodity labels. The first 15 days were used only to build lag and rolling features; the last 15 days were used to score next-day forecasts (today → predict tomorrow → compare with actual).</div>
+    <h3>Fix first line of §3.2</h3>
+    <div class="copy">The study leveraged a large time-series dataset from the Kalimati Fruits and Vegetable Market Development Board, as summarized in Section 3.2.0 and Table 3.2.</div>
+    <h3>Table 3.2 caption + table</h3>
+    <div class="copy">Table 3.2: Summary of datasets used in Veggieezee</div>
+    <table class="data">
+      <tr><th>Dataset</th><th>Source</th><th>Period / window</th><th>Rows (approx.)</th><th>Role</th></tr>
+      <tr><td>Training (cleaned)</td><td>Kalimati Market Development Board</td><td>Jun 2013 – Jun 2025</td><td>492,803</td><td>Train XGBoost (chronological split)</td></tr>
+      <tr><td>Training test holdout</td><td>Same as above</td><td>Last 3 months</td><td>12,515</td><td>Holdout evaluation (Table 3.1)</td></tr>
+      <tr><td>Next-day validation</td><td>Kalimati 30-day export</td><td>30 calendar days</td><td>2,319</td><td>Walk-forward next-day validation (§3.8.4)</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>§3.2.4 — Text after feature engineering (before Figure 3.9)</h2>
+    <div class="copy">To interpret which inputs drive the XGBoost model, built-in feature importance scores were computed after training. Lag and rolling price features contribute the highest importance, which is expected for short-term price forecasting. Festival and calendar features contribute smaller but non-zero importance, capturing seasonal and cultural demand effects in the Nepalese market.</div>
   </section>
 
   <section>
@@ -261,31 +335,97 @@ PAGE = """<!DOCTYPE html>
   </section>
 
   <section>
+    <h2>§3.8.4 — Next-day validation (body text)</h2>
+    <div class="copy">3.8.4 Next-Day Walk-Forward Validation (Real-World Protocol)
+
+In addition to the three-month holdout evaluation in Section 3.8.1, a second validation was performed to mirror real daily use of the system. Using the most recent 30-day Kalimati price export, the already trained XGBoost model was not retrained. For each validation day from day 16 to day 30, the system used all prices up to day N to predict day N+1 and compared with the actual Kalimati price.
+
+This walk-forward, one-step-ahead procedure produced 15 validation days and multiple vegetable-level forecast pairs. Performance was measured using MAE, RMSE, and MAPE in NPR after inverse log transform (expm1). Figures 3.10a–3.10d include the Colab/console log under each chart.</div>
+  </section>
+
+  <section>
     <h2>Figure 3.10a — Validation overview + log</h2>
     {IMG_OVERVIEW}
+    <div class="copy">Figure 3.10a: Next-day validation overview — market-wide average (left), one accurate example (centre), one higher-error example (right), with validation log beneath.</div>
   </section>
 
   <section>
     <h2>Figure 3.10b — Top 5 accurate vegetables (each named in log)</h2>
     <p class="muted">Each panel is one vegetable. The dark strip lists all five names with MAPE, MAE, and day count — copy that into the report.</p>
     {IMG_TOP5}
+    <div class="copy">Figure 3.10b: Top five accurate vegetables — predicted vs actual for each commodity; log lists all five Nepali names with MAPE and MAE.</div>
   </section>
 
   <section>
     <h2>Figure 3.10c — One accurate vs one higher-error + log</h2>
     {IMG_GOOD_BAD}
-    <div class="copy">Honest reporting: most vegetables track well, but some days or commodities show larger gaps (supply shocks, mapping, or volatile wholesale moves).</div>
+    <div class="copy">Figure 3.10c: Side-by-side comparison of one accurate vegetable and one higher-error vegetable, with validation log.
+
+Honest reporting: most vegetables track well, but some commodities show larger gaps on some days (supply shocks, mapping limits, or volatile wholesale moves).</div>
   </section>
 
   <section>
     <h2>Figure 3.10d — Every vegetable (MAPE bar + full log list)</h2>
-    <p class="muted">Green bars = better than average MAPE (~7.6%); orange = higher error. The log lists <strong>every vegetable by Nepali name</strong> — use for appendix or Table 3.x.</p>
+    <p class="muted">Green bars = better than average MAPE; orange = higher error. Log must be a <strong>real Colab screenshot</strong> from print_validation_log.py.</p>
     {IMG_ALL_VEG}
+    <div class="copy">Figure 3.10d: Mean next-day MAPE for every mapped vegetable (Nepali names on axis) with full per-commodity log listing below the chart.</div>
   </section>
 
   <section>
     <h2>Figure 3.11 — Error analysis + log</h2>
     {IMG_ERRORS}
+    <div class="copy">Figure 3.11: Distribution of absolute and percentage error, mean error by validation day, and predicted-vs-actual scatter for all forecast pairs, with validation log.</div>
+  </section>
+
+  <section>
+    <h2>§3.8.5 — Deployment feasibility</h2>
+    <div class="copy">3.8.5 Deployment Feasibility
+
+Veggieezee is feasible to deploy as a daily decision-support tool for Kalimati-focused vegetable price forecasting. The production stack uses Django for the web application, a Joblib-serialized XGBoost model for inference, and SQLite for storing synced Kalimati prices. A single vegetable forecast requires feature engineering from historical rows plus one model inference call; inference time is sub-second on a standard server, which supports interactive use in the web interface and API.
+
+Daily operation is feasible because the model is trained offline once and reused at runtime. New Kalimati prices can be ingested through the sync pipeline and appended to the database; the next-day forecast uses updated lag and rolling features without retraining each day. For long-term accuracy, scheduled retraining (weekly or monthly) is recommended when more historical data accumulates.
+
+Deployment limitations include dependence on Kalimati data availability, mapping between Nepali market names and training class names, and hosting constraints for automated daily sync. Scaling to additional regions would require new data sources, label mapping, and model retraining.</div>
+    <h3>Table 3.3 (optional)</h3>
+    <div class="copy">Table 3.3: Deployment feasibility summary</div>
+    <table class="data">
+      <tr><th>Component</th><th>Feasible?</th><th>Remarks</th></tr>
+      <tr><td>Daily price ingestion</td><td>Yes</td><td>Kalimati API / sync command</td></tr>
+      <tr><td>Next-day forecast without retrain</td><td>Yes</td><td>§3.8.4 walk-forward validation</td></tr>
+      <tr><td>Web / API serving</td><td>Yes</td><td>Django + Joblib model</td></tr>
+      <tr><td>Sub-second inference</td><td>Yes</td><td>Per vegetable request</td></tr>
+      <tr><td>All Nepal markets</td><td>No</td><td>Scope: Kalimati wholesale only</td></tr>
+      <tr><td>Automatic shock handling</td><td>Partial</td><td>Festivals in features; sudden shocks remain a limitation</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>§4.1.1 — Limitations</h2>
+    <div class="copy">4.1.1 Limitations
+
+1. Data window: Next-day validation used a 30-day Kalimati export; only 15 days were scored as forecasts. Longer validation would strengthen confidence.
+
+2. Geographic scope: Results apply to Kalimati wholesale market, Kathmandu, not to all regions or retail shops in Nepal.
+
+3. Commodity coverage: Not every Nepali commodity name in the daily market file maps to a trained model class; unmapped items are excluded from scored forecasts.
+
+4. Market shocks: Sudden supply disruptions, transport strikes, extreme weather, or unmodeled policy changes can cause large errors. Festival and season features capture regular patterns but cannot fully predict abrupt shocks (see higher-error example in Figure 3.10c).
+
+5. Retraining policy: Validation used a fixed trained model. Production accuracy may drift unless the model is retrained periodically on new data.</div>
+  </section>
+
+  <section>
+    <h2>§4.2 — Future enhancement (add bullets c–e)</h2>
+    <div class="copy">c. Geographic and commodity expansion: Extend data collection to additional wholesale markets and districts beyond Kalimati, and increase the number of mapped vegetable classes in the training taxonomy.
+
+d. Longer history and automated retraining: Use multi-year Kalimati archives (492,803+ cleaned rows) with scheduled weekly or monthly retraining to reduce drift after market shocks.
+
+e. Enhanced validation: Continue next-day walk-forward checks on each new 30-day export and alert stakeholders when MAPE exceeds a defined threshold.</div>
+  </section>
+
+  <section>
+    <h2>§4.1 — Fix conclusion paragraph (dataset numbers)</h2>
+    <div class="copy">__CONCLUSION_PARA__</div>
   </section>
 
   <section>
@@ -301,11 +441,8 @@ PAGE = """<!DOCTYPE html>
   </section>
 
   <section>
-    <h2>Short text blocks for Word</h2>
-    <h3>§3.8.4 (validation)</h3>
-    <div class="copy">We validated the deployed XGBoost model without retraining: for each of 15 days in a 30-day Kalimati export, today’s prices predicted tomorrow’s average, then we compared with the actual. Figures 3.10a–3.10d include the console log under each chart (same as Colab output).</div>
-    <h3>§4.1.1 (limitations)</h3>
-    <div class="copy">Validation used 30 days at one market. Sudden shocks are visible in higher-error commodities (Figure 3.10c). Not every Nepali label maps to a trained class.</div>
+    <h2>Training log snippet (§3.2 / §3.8.1 — optional paste if no screenshot)</h2>
+    <pre class="log" style="background:#1e1e1e;color:#d4d4d4;padding:1rem;border-radius:8px;font-size:.78rem;overflow-x:auto;">__TRAINING_LOG__</pre>
   </section>
 </div>
 </body>
@@ -327,15 +464,60 @@ def main() -> None:
 
     option_b = build_option_b_narrative(df)
 
+    mae, rmse, mape = _metrics_from_results()
+    conclusion = (
+        f"The XGBoost model was trained on 492,803 cleaned records spanning 2013 to 2025 and "
+        f"evaluated on the last three months (12,515 rows) as the holdout test set. On the holdout set, "
+        f"the model achieved MAE of 1.65 NPR, RMSE of 7.07 NPR, and R² of 0.9977 (Table 3.1). "
+        f"Separately, next-day walk-forward validation on a 30-day Kalimati window achieved "
+        f"MAE Rs.{mae:.2f}, RMSE Rs.{rmse:.2f}, and MAPE {mape:.2f}% (Section 3.8.4, Figures 3.10a–3.10d)."
+    )
+
     html_out = PAGE.format(
-        IMG_TRAIN=img_tag("fig_3_9_feature_importance_with_log.png", "Figure 3.9 — Feature importance with training log"),
-        IMG_OVERVIEW=img_tag("validation_overview_with_log.png", "Figure 3.10a — Market average + examples + validation log"),
-        IMG_TOP5=img_tag("validation_top5_accurate_with_log.png", "Figure 3.10b — Five accurate vegetables + log naming each"),
-        IMG_GOOD_BAD=img_tag("validation_good_vs_bad_with_log.png", "Figure 3.10c — Accurate vs higher-error + log"),
-        IMG_ALL_VEG=img_tag("validation_all_vegetables_mape_with_log.png", "Figure 3.10d — All vegetables MAPE + full name log"),
-        IMG_ERRORS=img_tag("validation_error_analysis_with_log.png", "Figure 3.11 — Error charts + validation log"),
+        IMG_TRAIN=img_tag(
+            PNG_NAMES[5],
+            "Figure 3.9 — Feature importance with training log",
+            PNG_FALLBACK[5],
+            "fig_3_9_feature_importance_with_log.png",
+        ),
+        IMG_OVERVIEW=img_tag(
+            PNG_NAMES[0],
+            "Figure 3.10a — Market average + examples + validation log",
+            PNG_FALLBACK[0],
+            "validation_overview_with_log.png",
+        ),
+        IMG_TOP5=img_tag(
+            PNG_NAMES[1],
+            "Figure 3.10b — Five accurate vegetables + log naming each",
+            PNG_FALLBACK[1],
+            "validation_top5_accurate_with_log.png",
+        ),
+        IMG_GOOD_BAD=img_tag(
+            PNG_NAMES[2],
+            "Figure 3.10c — Accurate vs higher-error + log",
+            PNG_FALLBACK[2],
+            "validation_good_vs_bad_with_log.png",
+        ),
+        IMG_ALL_VEG=img_tag(
+            PNG_NAMES[3],
+            "Figure 3.10d — All vegetables MAPE + full name log",
+            PNG_FALLBACK[3],
+            "validation_all_vegetables_mape_with_log.png",
+            "validation_all_vegetables_with_real_log.png",
+        ),
+        IMG_ERRORS=img_tag(
+            PNG_NAMES[4],
+            "Figure 3.11 — Error charts + validation log",
+            PNG_FALLBACK[4],
+            "validation_error_analysis_with_log.png",
+        ),
         PER_VEG_TABLE=load_per_veg_table(),
-    ).replace("__OPTION_B__", html.escape(option_b)).replace("__VEG_COUNT__", str(veg_count)).replace("__PAIRS__", str(pairs))
+    )
+    html_out = (
+        html_out.replace("__OPTION_B__", html.escape(option_b))
+        .replace("__CONCLUSION_PARA__", html.escape(conclusion))
+        .replace("__TRAINING_LOG__", html.escape(TRAINING_LOG))
+    )
 
     OUT.write_text(html_out, encoding="utf-8")
     mb = OUT.stat().st_size / (1024 * 1024)
